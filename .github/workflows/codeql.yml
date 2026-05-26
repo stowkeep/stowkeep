@@ -1,0 +1,33 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364cd4bcfa # v4.2.2
+      - uses: actions/setup-go@41dfa0f9b0c86a512a455a8499750c8548585a81 # v5.1.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build web assets
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+      - uses: github/codeql-action/init@df9453242f264335ad246d6593b677a3494f9c676 # v3.28.0
+        with:
+          languages: go
+      - uses: github/codeql-action/autobuild@df9453242f264335ad246d6593b677a3494f9c676 # v3.28.0
+      - uses: github/codeql-action/analyze@df9453242f264335ad246d6593b677a3494f9c676 # v3.28.0

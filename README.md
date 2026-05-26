@@ -52,13 +52,15 @@ Open `http://localhost:8080` and complete first-run setup.
 | Code standards            | [docs/code-standards.md](docs/code-standards.md)               |
 | Product roadmap           | [planning/PRD.md](planning/PRD.md)                             |
 | Phase gates (quality bar) | [planning/phase-gates.md](planning/phase-gates.md)             |
+| Stage 0 gate checklist  | [docs/stage-0-gate.md](docs/stage-0-gate.md)                   |
+| Governance              | [GOVERNANCE.md](GOVERNANCE.md)                                 |
 | AI agent instructions     | [AGENTS.md](AGENTS.md)                                         |
 | Project decisions tracker | [planning/decisions-todo.md](planning/decisions-todo.md)       |
 | Security                  | [SECURITY.md](SECURITY.md)                                     |
 
 ## Project status
 
-> **Pre-alpha — not for production hosting of workloads or secrets you cannot afford to lose.** Stowkeep is currently maintained by a single developer, in the planning phase, with no code shipped yet. The community files (`CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue templates) are forward-looking — we are not actively seeking contributors yet, but ideas and feedback are very welcome via Issues. The project is Apache 2.0 from day 1; a contributor workflow opens up around `v0.1.0`. Live decisions and roadmap deferrals live in [planning/decisions-todo.md](planning/decisions-todo.md).
+> **Pre-alpha — not for production hosting of workloads or secrets you cannot afford to lose.** Stowkeep is maintained by a single developer. Stage 0 foundation code (API skeleton, CI, migrations) is landing; user-visible Swarm features begin at Stage 1. The community files (`CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue templates) are forward-looking — we are not actively seeking contributors yet, but ideas and feedback are very welcome via Issues. The project is Apache 2.0 from day 1; a contributor workflow opens up around `v0.1.0`. Live decisions and roadmap deferrals live in [planning/decisions-todo.md](planning/decisions-todo.md).
 
 ## Contributing
 

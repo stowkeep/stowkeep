@@ -1,0 +1,20 @@
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs:
+    - web
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec

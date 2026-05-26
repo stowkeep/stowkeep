@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stage 0 application scaffold:** Go API server (`cmd/stowkeep`), React/Vite frontend (`web/`), embedded SPA via `pkg/web` + `embed.FS`
+- HTTP endpoints: `GET /healthz`, `GET /readyz`, `GET /api/v1/version`
+- Structured logging (`pkg/observability/log`) with request ID correlation and access-log scrubbing tests
+- Dual-database layer (`pkg/db`) with SQLite default and PostgreSQL support; goose migrations for hash-chained `audit_events` and `envelope_canary` tables
+- `MasterKeyProvider` interface stub (`pkg/secrets`) with `EnvKey` and `KMSProvider` skeleton
+- Backup foundation (`pkg/backup`): SQLite `VACUUM INTO` wrapper and PostgreSQL `pg_dump` streaming interface
+- Makefile, Dockerfile (multi-stage, distroless), `docker-compose.dev.yml`, OpenAPI stub
+- Migrations bundled in container image via `STOWKEEP_MIGRATIONS_DIR` (default `/migrations` in Docker)
+- React frontend uses Tailwind CSS; `web/components.json` prepared for shadcn/ui
+- CI workflows: `ci.yml`, `release-image.yml` (cosign + SLSA + Syft SBOM), `codeql.yml`
+- `GOVERNANCE.md`, `.github/CODEOWNERS`, pre-alpha contributor policy in CONTRIBUTING (closes OPEN-005)
+
 - Planning documents: PRD, tech stack, engineering playbook, testing strategy
 - Open source foundation: LICENSE (Apache 2.0), CONTRIBUTING, CODE_OF_CONDUCT, SECURITY
 - Documentation: development guide, database guide (SQLite + PostgreSQL), code standards

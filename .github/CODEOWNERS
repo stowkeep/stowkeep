@@ -1,0 +1,19 @@
+# CODEOWNERS — security-sensitive paths require maintainer review (D-023).
+# When the team grows, require two approvals on these paths before merge.
+
+# Security-sensitive packages
+/pkg/secrets/          @stowkeep/maintainers
+/pkg/auth/             @stowkeep/maintainers
+/pkg/rbac/             @stowkeep/maintainers
+
+# Database migrations
+/migrations/           @stowkeep/maintainers
+
+# Security documentation
+/docs/security/        @stowkeep/maintainers
+
+# Logging (secret scrubbing, access log shape)
+/pkg/observability/log/ @stowkeep/maintainers
+
+# Default: maintainer review on all changes until v0.5.0
+*                      @stowkeep/maintainers
