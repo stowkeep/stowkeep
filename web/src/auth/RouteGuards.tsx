@@ -10,7 +10,10 @@ export function RequireAuth() {
   const [needsBootstrap, setNeedsBootstrap] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void api.setupStatus().then((s) => setNeedsBootstrap(s.needs_bootstrap));
+    void api
+      .setupStatus()
+      .then((s) => setNeedsBootstrap(s.needs_bootstrap))
+      .catch(() => setNeedsBootstrap(false));
   }, []);
 
   if (loading || needsBootstrap === null) {
@@ -37,7 +40,10 @@ export function GuestOnly() {
   const [needsBootstrap, setNeedsBootstrap] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void api.setupStatus().then((s) => setNeedsBootstrap(s.needs_bootstrap));
+    void api
+      .setupStatus()
+      .then((s) => setNeedsBootstrap(s.needs_bootstrap))
+      .catch(() => setNeedsBootstrap(false));
   }, []);
 
   if (loading || needsBootstrap === null) {
@@ -63,7 +69,10 @@ export function SetupOnly() {
   const [needsBootstrap, setNeedsBootstrap] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void api.setupStatus().then((s) => setNeedsBootstrap(s.needs_bootstrap));
+    void api
+      .setupStatus()
+      .then((s) => setNeedsBootstrap(s.needs_bootstrap))
+      .catch(() => setNeedsBootstrap(false));
   }, []);
 
   if (loading || needsBootstrap === null) {

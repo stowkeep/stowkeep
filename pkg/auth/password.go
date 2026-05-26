@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -24,6 +25,13 @@ var (
 	ErrInvalidPasswordHash = errors.New("invalid password hash")
 )
 
+type argonParams struct {
+	time    uint32
+	memory  uint32
+	threads uint8
+	keyLen  uint32
+}
+
 // HashPassword returns an argon2id encoded password hash.
 func HashPassword(password string) (string, error) {
 	salt := make([]byte, saltLen)
@@ -39,29 +47,65 @@ func HashPassword(password string) (string, error) {
 
 // VerifyPassword compares a password against an argon2id hash.
 func VerifyPassword(encodedHash, password string) (bool, error) {
-	salt, hash, err := decodeArgon2Hash(encodedHash)
+	params, salt, hash, err := decodeArgon2Hash(encodedHash)
 	if err != nil {
 		return false, err
 	}
-	other := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
+	other := argon2.IDKey([]byte(password), salt, params.time, params.memory, params.threads, params.keyLen)
 	if subtle.ConstantTimeCompare(hash, other) == 1 {
 		return true, nil
 	}
 	return false, nil
 }
 
-func decodeArgon2Hash(encoded string) (salt, hash []byte, err error) {
+func decodeArgon2Hash(encoded string) (argonParams, []byte, []byte, error) {
 	parts := strings.Split(encoded, "$")
 	if len(parts) != 6 || parts[1] != "argon2id" {
-		return nil, nil, ErrInvalidPasswordHash
+		return argonParams{}, nil, nil, ErrInvalidPasswordHash
 	}
-	salt, err = base64.RawStdEncoding.DecodeString(parts[4])
+	params, err := parseArgonParams(parts[3])
 	if err != nil {
-		return nil, nil, fmt.Errorf("%w: decode salt: %v", ErrInvalidPasswordHash, err)
+		return argonParams{}, nil, nil, err
 	}
-	hash, err = base64.RawStdEncoding.DecodeString(parts[5])
+	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
-		return nil, nil, fmt.Errorf("%w: decode hash: %v", ErrInvalidPasswordHash, err)
+		return argonParams{}, nil, nil, fmt.Errorf("%w: decode salt: %v", ErrInvalidPasswordHash, err)
 	}
-	return salt, hash, nil
+	hash, err := base64.RawStdEncoding.DecodeString(parts[5])
+	if err != nil {
+		return argonParams{}, nil, nil, fmt.Errorf("%w: decode hash: %v", ErrInvalidPasswordHash, err)
+	}
+	params.keyLen = uint32(len(hash)) // #nosec G115 -- key length comes from decoded hash bytes
+	return params, salt, hash, nil
+}
+
+func parseArgonParams(raw string) (argonParams, error) {
+	var params argonParams
+	for _, part := range strings.Split(raw, ",") {
+		k, v, ok := strings.Cut(part, "=")
+		if !ok {
+			return argonParams{}, fmt.Errorf("%w: malformed params %q", ErrInvalidPasswordHash, raw)
+		}
+		n, err := strconv.ParseUint(v, 10, 32)
+		if err != nil {
+			return argonParams{}, fmt.Errorf("%w: parse param %q: %v", ErrInvalidPasswordHash, part, err)
+		}
+		switch k {
+		case "m":
+			params.memory = uint32(n)
+		case "t":
+			params.time = uint32(n)
+		case "p":
+			if n > 255 {
+				return argonParams{}, fmt.Errorf("%w: threads out of range", ErrInvalidPasswordHash)
+			}
+			params.threads = uint8(n) // #nosec G115 -- bounded above
+		default:
+			return argonParams{}, fmt.Errorf("%w: unknown param %q", ErrInvalidPasswordHash, k)
+		}
+	}
+	if params.memory == 0 || params.time == 0 || params.threads == 0 {
+		return argonParams{}, fmt.Errorf("%w: incomplete params %q", ErrInvalidPasswordHash, raw)
+	}
+	return params, nil
 }

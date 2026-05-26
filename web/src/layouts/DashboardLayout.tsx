@@ -29,21 +29,27 @@ export function DashboardLayout() {
             <p className="text-xs text-slate-500">Swarm dashboard</p>
           </div>
           <nav className="flex flex-1 flex-col gap-1">
-            {nav.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    "rounded-md px-3 py-2 text-sm font-medium",
-                    isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100",
-                    swarmDisabled && item.to !== "/settings" && "pointer-events-none opacity-40",
-                  )
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+            {nav.map((item) => {
+              const isDisabled = swarmDisabled && item.to !== "/settings";
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  aria-disabled={isDisabled || undefined}
+                  tabIndex={isDisabled ? -1 : undefined}
+                  onClick={isDisabled ? (e) => e.preventDefault() : undefined}
+                  className={({ isActive }) =>
+                    cn(
+                      "rounded-md px-3 py-2 text-sm font-medium",
+                      isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100",
+                      isDisabled && "pointer-events-none opacity-40",
+                    )
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              );
+            })}
           </nav>
           <div className="mt-auto space-y-2 border-t border-slate-200 pt-4 text-xs text-slate-500">
             <div className="truncate">{user?.email}</div>

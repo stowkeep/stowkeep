@@ -42,6 +42,26 @@ func TestSwarmStatusRequiresAuthAndFeature(t *testing.T) {
 	}
 }
 
+func TestSwarmListEndpointsRequireAuth(t *testing.T) {
+	srv := testServerWithFeatures(t, "swarm_readonly")
+	paths := []string{
+		"/api/v1/swarm/nodes",
+		"/api/v1/swarm/services",
+		"/api/v1/swarm/tasks",
+		"/api/v1/swarm/stacks",
+	}
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			rec := httptest.NewRecorder()
+			srv.Handler().ServeHTTP(rec, req)
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("unauthenticated %s = %d", path, rec.Code)
+			}
+		})
+	}
+}
+
 func testServerWithFeatures(t *testing.T, features string) *server.Server {
 	t.Helper()
 	dir := t.TempDir()

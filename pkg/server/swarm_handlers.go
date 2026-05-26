@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -19,6 +20,7 @@ func NewSwarmHandler(d *docker.Client) *SwarmHandler {
 	return &SwarmHandler{docker: d}
 }
 
+// Routes returns the chi router for read-only Swarm API endpoints.
 func (h *SwarmHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/status", h.status)
@@ -74,7 +76,16 @@ func (h *SwarmHandler) stackDetail(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	detail, err := h.docker.GetStack(r.Context(), name)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "stack not found"})
+		if errors.Is(err, docker.ErrStackNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "stack not found"})
+			return
+		}
+		slog.ErrorContext(r.Context(), "swarm stack lookup failed",
+			slog.String("component", "swarm"),
+			slog.String("stack", name),
+			slog.String("error", err.Error()),
+		)
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "docker request failed"})
 		return
 	}
 	writeJSON(w, http.StatusOK, detail)

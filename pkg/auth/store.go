@@ -68,14 +68,6 @@ func (s *Store) CreateBootstrapAdmin(ctx context.Context, email, password string
 		return nil, fmt.Errorf("password must be at least 8 characters")
 	}
 
-	count, err := s.UserCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if count > 0 {
-		return nil, ErrBootstrapComplete
-	}
-
 	hash, err := HashPassword(password)
 	if err != nil {
 		return nil, err
@@ -83,10 +75,21 @@ func (s *Store) CreateBootstrapAdmin(ctx context.Context, email, password string
 
 	id := uuid.NewString()
 	now := time.Now().UTC()
-	q := s.q(`INSERT INTO users (id, email, password_hash, role, created_at) VALUES (?, ?, ?, 'admin', ?)`)
-	_, err = s.db.ExecContext(ctx, q, id, email, hash, formatDBTime(now))
+	q := s.q(`
+		INSERT INTO users (id, email, password_hash, role, created_at)
+		SELECT ?, ?, ?, 'admin', ?
+		WHERE NOT EXISTS (SELECT 1 FROM users)
+	`)
+	res, err := s.db.ExecContext(ctx, q, id, email, hash, formatDBTime(now))
 	if err != nil {
 		return nil, fmt.Errorf("insert user: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("rows affected: %w", err)
+	}
+	if n == 0 {
+		return nil, ErrBootstrapComplete
 	}
 	return &User{ID: id, Email: email, Role: "admin", CreatedAt: now}, nil
 }
@@ -96,7 +99,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, string
 	email = normalizeEmail(email)
 	var u User
 	var hash string
-	var createdAt string
+	var createdAt any
 	q := s.q(`SELECT id, email, password_hash, role, created_at FROM users WHERE email = ?`)
 	err := s.db.QueryRowContext(ctx, q, email).Scan(&u.ID, &u.Email, &hash, &u.Role, &createdAt)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -127,8 +130,8 @@ func (s *Store) CreateSession(ctx context.Context, userID, tokenHash string, exp
 // GetUserBySessionToken returns the user for a valid, unexpired session token hash.
 func (s *Store) GetUserBySessionToken(ctx context.Context, tokenHash string) (*User, error) {
 	var u User
-	var createdAt string
-	var expiresAt string
+	var createdAt any
+	var expiresAt any
 	q := s.q(`
 		SELECT u.id, u.email, u.role, u.created_at, s.expires_at
 		FROM sessions s

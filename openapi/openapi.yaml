@@ -3,6 +3,9 @@ info:
   title: Stowkeep API
   version: 0.1.0
   description: Self-hosted control plane for Docker Swarm.
+servers:
+  - url: https://stowkeep.example.com
+    description: Production (HTTPS required for session cookies)
 paths:
   /healthz:
     get:

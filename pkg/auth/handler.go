@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -78,7 +79,15 @@ func (h *Handler) SetupAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		if isBootstrapValidationError(err) {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		slog.ErrorContext(r.Context(), "bootstrap admin failed",
+			slog.String("component", "auth"),
+			slog.String("error", err.Error()),
+		)
+		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if err := h.issueSession(w, r.Context(), user); err != nil {
@@ -174,4 +183,9 @@ func (h *Handler) issueSession(w http.ResponseWriter, ctx context.Context, user 
 	}
 	SetSessionCookie(w, plain, expiresAt, h.cfg.CookieSecure)
 	return nil
+}
+
+func isBootstrapValidationError(err error) bool {
+	msg := err.Error()
+	return msg == "email is required" || strings.HasPrefix(msg, "password must be")
 }

@@ -1,5 +1,10 @@
 package docker
 
+import "errors"
+
+// ErrStackNotFound is returned when a stack name has no services.
+var ErrStackNotFound = errors.New("stack not found")
+
 // Status describes Docker Engine connectivity and Swarm state.
 type Status struct {
 	Connected      bool   `json:"connected"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -129,8 +130,13 @@ func (c *Client) ListStacks(ctx context.Context) ([]StackSummary, error) {
 		counts[svc.Stack]++
 	}
 	out := make([]StackSummary, 0, len(counts))
-	for name, count := range counts {
-		out = append(out, StackSummary{Name: name, ServiceCount: count})
+	names := make([]string, 0, len(counts))
+	for name := range counts {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		out = append(out, StackSummary{Name: name, ServiceCount: counts[name]})
 	}
 	return out, nil
 }
@@ -148,7 +154,7 @@ func (c *Client) GetStack(ctx context.Context, name string) (*StackDetail, error
 		}
 	}
 	if len(matched) == 0 {
-		return nil, fmt.Errorf("stack %q not found", name)
+		return nil, fmt.Errorf("%w: %q", ErrStackNotFound, name)
 	}
 	return &StackDetail{Name: name, Services: matched}, nil
 }
@@ -181,7 +187,7 @@ func mapNode(n swarm.Node) Node {
 
 func mapService(svc swarm.Service) Service {
 	image := ""
-	if len(svc.Spec.TaskTemplate.ContainerSpec.Image) > 0 {
+	if svc.Spec.TaskTemplate.ContainerSpec != nil && len(svc.Spec.TaskTemplate.ContainerSpec.Image) > 0 {
 		image = svc.Spec.TaskTemplate.ContainerSpec.Image
 	}
 	mode := "replicated"

@@ -31,6 +31,12 @@ func (l *loginLimiter) allow(key string) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
+	for k, entry := range l.entries {
+		if now.After(entry.resetAt) {
+			delete(l.entries, k)
+		}
+	}
+
 	entry, ok := l.entries[key]
 	if !ok || now.After(entry.resetAt) {
 		l.entries[key] = &limitEntry{count: 1, resetAt: now.Add(l.window)}

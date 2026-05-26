@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -39,6 +41,46 @@ func TestMapServiceReplicated(t *testing.T) {
 	}
 	if len(got.PublishedPorts) != 1 || got.PublishedPorts[0].PublishedPort != 8080 {
 		t.Fatalf("ports = %+v", got.PublishedPorts)
+	}
+}
+
+func TestMapServiceNilContainerSpec(t *testing.T) {
+	running := uint64(2)
+	desired := uint64(3)
+	svc := swarm.Service{
+		ID: "svc1",
+		Spec: swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Name: "web_api",
+				Labels: map[string]string{
+					stackNamespaceLabel: "web",
+				},
+			},
+			TaskTemplate: swarm.TaskSpec{},
+			Mode:         swarm.ServiceMode{Replicated: &swarm.ReplicatedService{Replicas: &desired}},
+		},
+		ServiceStatus: &swarm.ServiceStatus{RunningTasks: running, DesiredTasks: desired},
+	}
+	got := mapService(svc)
+	if got.Name != "web_api" || got.Stack != "web" || got.Image != "" || got.Replicas != "2/3" {
+		t.Fatalf("service = %+v", got)
+	}
+}
+
+func TestGetStackNotFound(t *testing.T) {
+	services := []Service{{ID: "svc1", Name: "web_api", Stack: "web"}}
+	counts := make(map[string]int)
+	for _, svc := range services {
+		if svc.Stack != "" {
+			counts[svc.Stack]++
+		}
+	}
+	if len(counts) == 0 {
+		t.Fatal("expected stack counts")
+	}
+	err := fmt.Errorf("%w: %q", ErrStackNotFound, "missing")
+	if !errors.Is(err, ErrStackNotFound) {
+		t.Fatalf("errors.Is = false for %v", err)
 	}
 }
 

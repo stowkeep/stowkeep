@@ -1,10 +1,15 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/argon2"
 )
 
 func TestRebindPostgresQuery(t *testing.T) {
@@ -42,6 +47,31 @@ func TestVerifyPasswordInvalidHash(t *testing.T) {
 	_, err := VerifyPassword("not-a-hash", "pw")
 	if err != ErrInvalidPasswordHash {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestVerifyPasswordUsesStoredParams(t *testing.T) {
+	salt := make([]byte, saltLen)
+	if _, err := rand.Read(salt); err != nil {
+		t.Fatalf("rand: %v", err)
+	}
+	const (
+		customMemory  = uint32(32 * 1024)
+		customTime    = uint32(2)
+		customThreads = uint8(2)
+	)
+	hash := argon2.IDKey([]byte("password123"), salt, customTime, customMemory, customThreads, argonKeyLen)
+	encoded := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
+		customMemory, customTime, customThreads,
+		base64.RawStdEncoding.EncodeToString(salt),
+		base64.RawStdEncoding.EncodeToString(hash),
+	)
+	ok, err := VerifyPassword(encoded, "password123")
+	if err != nil {
+		t.Fatalf("VerifyPassword: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected password to verify with stored params")
 	}
 }
 
@@ -92,14 +122,14 @@ func TestScanTimeUnsupportedType(t *testing.T) {
 }
 
 func TestDecodeArgon2InvalidBase64(t *testing.T) {
-	_, _, err := decodeArgon2Hash("$argon2id$v=19$m=65536,t=3,p=4$!!!$!!!")
+	_, _, _, err := decodeArgon2Hash("$argon2id$v=19$m=65536,t=3,p=4$!!!$!!!")
 	if err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestDecodeArgon2WrongParts(t *testing.T) {
-	_, _, err := decodeArgon2Hash("$argon2id$v=19$m=65536")
+	_, _, _, err := decodeArgon2Hash("$argon2id$v=19$m=65536")
 	if err != ErrInvalidPasswordHash {
 		t.Fatalf("err = %v", err)
 	}

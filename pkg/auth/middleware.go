@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"net/http"
 )
 
@@ -26,7 +28,15 @@ func RequireAuth(store *Store) func(http.Handler) http.Handler {
 			}
 			user, err := store.GetUserBySessionToken(r.Context(), HashToken(token))
 			if err != nil {
-				writeError(w, http.StatusUnauthorized, "authentication required")
+				if errors.Is(err, ErrSessionNotFound) {
+					writeError(w, http.StatusUnauthorized, "authentication required")
+					return
+				}
+				slog.ErrorContext(r.Context(), "session lookup failed",
+					slog.String("component", "auth"),
+					slog.String("error", err.Error()),
+				)
+				writeError(w, http.StatusInternalServerError, "internal error")
 				return
 			}
 			ctx := context.WithValue(r.Context(), userContextKey, user)

@@ -212,7 +212,14 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Initialize Swarm
-        run: docker swarm init --advertise-addr 127.0.0.1 || true
+        run: |
+          if ! docker swarm init --advertise-addr 127.0.0.1; then
+            state="$(docker info --format '{{.Swarm.LocalNodeState}}' || true)"
+            if [ "$state" != "active" ]; then
+              echo "Swarm initialization failed and node is not active"
+              exit 1
+            fi
+          fi
       - name: Docker integration tests
         env:
           STOWKEEP_INTEGRATION_DOCKER: "1"
