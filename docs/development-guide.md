@@ -10,7 +10,7 @@ How to set up a local Stowkeep development environment.
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Go | 1.25+ | Backend (see `go.mod`) |
+| Go | 1.25+ | Backend (see `go.mod`; CI uses 1.25.10+) |
 | Node.js | 22 LTS | Frontend |
 | Docker | 24+ | Engine API + optional Swarm |
 | Make | any | Task runner |
