@@ -177,6 +177,23 @@ jobs:
           done
           docker logs "$cid"
           exit 1
+      - name: Volume mount smoke (SQLite on /data)
+        run: |
+          vol=stowkeep-ci-data-$$
+          cid=$(docker run -d -p 8081:8080 \
+            -v "$vol:/data" \
+            -e STOWKEEP_DATABASE_DRIVER=sqlite \
+            -e STOWKEEP_DATABASE_PATH=/data/stowkeep.db \
+            stowkeep:ci)
+          trap "docker rm -f $cid; docker volume rm $vol" EXIT
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8081/healthz; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs "$cid"
+          exit 1
       - name: Trivy scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
