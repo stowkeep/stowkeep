@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & discussion
+    url: https://github.com/stowkeep/stowkeep/discussions
+    about: Ask questions and share ideas (not for bugs or features)
+  - name: Phase gate sign-off
+    url: https://github.com/stowkeep/stowkeep/issues/new?template=phase_gate.yml
+    about: Close a stage — testing, docs, and code quality review before next stage
+  - name: Security report
+    url: https://github.com/stowkeep/stowkeep/blob/main/SECURITY.md
+    about: Report vulnerabilities privately — do not open a public issue

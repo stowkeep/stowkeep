@@ -1,0 +1,98 @@
+name: Phase gate sign-off
+description: Close a delivery stage — testing, documentation, and code quality review
+title: "Phase gate: Stage "
+labels: ["phase-gate", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when a **stage is complete** and ready for sign-off before starting the next stage.
+        Copy the checklist from [planning/phase-gates.md](https://github.com/stowkeep/stowkeep/blob/main/planning/phase-gates.md).
+
+        **Do not start the next stage until this issue is closed.**
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Stage completing
+      options:
+        - "0 — Foundation"
+        - "1 — Swarm read-only dashboard"
+        - "2 — Deploy and manage stacks"
+        - "3 — RBAC and audit"
+        - "4 — Secrets"
+        - "5 — GitOps sync"
+        - "5.5 — Webhook ingestion"
+        - "6 — Preview environments"
+        - "7 — Hardening and enterprise"
+    validations:
+      required: true
+
+  - type: input
+    id: ci_run
+    attributes:
+      label: Latest green CI run on main (URL)
+    validations:
+      required: true
+
+  - type: textarea
+    id: prs
+    attributes:
+      label: Stage PRs merged
+      description: Links to PRs included in this stage
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: testing
+    attributes:
+      label: Testing pillar
+      options:
+        - label: CI green on main (lint, test, build, SQLite + Postgres matrix)
+          required: true
+        - label: Stage manual test checklist complete (testing-strategy.md §8)
+          required: true
+        - label: No known security test gaps (leakage, RBAC bypass)
+          required: true
+
+  - type: checkboxes
+    id: documentation
+    attributes:
+      label: Documentation pillar
+      options:
+        - label: User/docs updated for all user-visible behavior
+          required: true
+        - label: CHANGELOG updated; ready for release section
+          required: true
+        - label: Godoc/TSDoc complete on new exported APIs
+          required: true
+        - label: ADRs and threat model updated if needed
+          required: true
+
+  - type: checkboxes
+    id: code_quality
+    attributes:
+      label: Code quality pillar
+      options:
+        - label: Lint clean — no new warnings
+          required: true
+        - label: All stage PRs reviewed; CODEOWNER paths approved
+          required: true
+        - label: Migrations apply on SQLite and PostgreSQL
+          required: true
+        - label: No critical CVEs in image or direct dependencies
+          required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / deferred items
+      description: Link to decisions-todo.md entries that affect the next stage
+
+  - type: checkboxes
+    id: signoff
+    attributes:
+      label: Maintainer sign-off
+      options:
+        - label: I confirm all three pillars pass and the next stage may begin
+          required: true

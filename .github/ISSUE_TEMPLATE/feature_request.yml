@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest an idea or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [planning/PRD.md](https://github.com/stowkeep/stowkeep/blob/main/planning/PRD.md) — your idea may already be on the roadmap.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem does this solve? Who benefits?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Related PRD area (if known)
+      options:
+        - Swarm dashboard / deploy
+        - GitOps
+        - Secrets
+        - RBAC
+        - Preview environments
+        - Documentation / DX
+        - Other / not sure
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to submit a PR for this feature
+          required: false
