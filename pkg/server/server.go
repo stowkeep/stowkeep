@@ -12,7 +12,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
+	"github.com/stowkeep/stowkeep/pkg/auth"
 	"github.com/stowkeep/stowkeep/pkg/config"
+	"github.com/stowkeep/stowkeep/pkg/docker"
 	"github.com/stowkeep/stowkeep/pkg/http/middleware"
 	"github.com/stowkeep/stowkeep/pkg/web"
 )
@@ -22,11 +24,32 @@ type Server struct {
 	cfg    *config.Config
 	logger *slog.Logger
 	db     *sql.DB
+	auth   *auth.Store
+	docker *docker.Client
+	router chi.Router
 	http   *http.Server
 }
 
 // New creates a Server with routes and middleware configured.
 func New(cfg *config.Config, logger *slog.Logger, db *sql.DB) *Server {
+	authStore := auth.NewStore(db, cfg.ResolvedDriver())
+	authHandler := auth.NewHandler(authStore, auth.HandlerConfig{
+		SessionIdleTTL: cfg.SessionIdleTTL,
+		CookieSecure:   cfg.CookieSecure,
+	})
+
+	var dockerClient *docker.Client
+	if cli, err := docker.New(cfg.DockerHost, cfg.DockerTimeout); err != nil {
+		logger.Warn("docker client disabled",
+			slog.String("component", "swarm"),
+			slog.String("error", err.Error()),
+		)
+	} else {
+		dockerClient = cli
+	}
+
+	swarmHandler := NewSwarmHandler(dockerClient)
+
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
 	r.Use(middleware.RequestID)
@@ -37,6 +60,24 @@ func New(cfg *config.Config, logger *slog.Logger, db *sql.DB) *Server {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/v1/version", versionHandler(cfg))
+
+		r.Route("/v1/setup", func(r chi.Router) {
+			r.Get("/status", authHandler.SetupStatus)
+			r.Post("/admin", authHandler.SetupAdmin)
+		})
+
+		r.Post("/v1/auth/login", authHandler.Login)
+
+		r.Group(func(r chi.Router) {
+			r.Use(auth.RequireAuth(authStore))
+			r.Post("/v1/auth/logout", authHandler.Logout)
+			r.Get("/v1/auth/me", authHandler.Me)
+
+			r.Route("/v1/swarm", func(r chi.Router) {
+				r.Use(RequireFeature(cfg, "swarm_readonly"))
+				r.Mount("/", swarmHandler.Routes())
+			})
+		})
 	})
 
 	spa := web.Handler()
@@ -46,6 +87,9 @@ func New(cfg *config.Config, logger *slog.Logger, db *sql.DB) *Server {
 		cfg:    cfg,
 		logger: logger,
 		db:     db,
+		auth:   authStore,
+		docker: dockerClient,
+		router: r,
 		http: &http.Server{
 			Addr:              cfg.HTTPAddr,
 			Handler:           r,
@@ -91,7 +135,7 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 
 // Handler returns the root HTTP handler (for tests).
 func (s *Server) Handler() http.Handler {
-	return s.http.Handler
+	return s.router
 }
 
 // ListenAndServe starts the HTTP server.
@@ -105,5 +149,10 @@ func (s *Server) ListenAndServe() error {
 
 // Shutdown gracefully stops the HTTP server.
 func (s *Server) Shutdown(ctx context.Context) error {
+	if s.docker != nil {
+		if err := s.docker.Close(); err != nil {
+			s.logger.Warn("docker client close failed", slog.String("error", err.Error()))
+		}
+	}
 	return s.http.Shutdown(ctx)
 }

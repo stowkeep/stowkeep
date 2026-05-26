@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -20,8 +21,11 @@ type Config struct {
 	DockerHost     string `envconfig:"STOWKEEP_DOCKER_HOST" default:"unix:///var/run/docker.sock"`
 	MasterKey      string `envconfig:"STOWKEEP_MASTER_KEY"`
 	Features       string `envconfig:"STOWKEEP_FEATURES"`
-	MigrationsDir  string `envconfig:"STOWKEEP_MIGRATIONS_DIR" default:"migrations"`
-	Version        string `envconfig:"STOWKEEP_VERSION" default:"dev"`
+	MigrationsDir  string        `envconfig:"STOWKEEP_MIGRATIONS_DIR" default:"migrations"`
+	Version        string        `envconfig:"STOWKEEP_VERSION" default:"dev"`
+	SessionIdleTTL time.Duration `envconfig:"STOWKEEP_SESSION_IDLE_TTL" default:"24h"`
+	CookieSecure   bool          `envconfig:"STOWKEEP_COOKIE_SECURE" default:"false"`
+	DockerTimeout  time.Duration `envconfig:"STOWKEEP_DOCKER_TIMEOUT" default:"30s"`
 }
 
 // Load reads configuration from the environment.
@@ -96,4 +100,10 @@ func (c *Config) FeatureSet() map[string]struct{} {
 		}
 	}
 	return out
+}
+
+// HasFeature reports whether name is enabled in STOWKEEP_FEATURES.
+func (c *Config) HasFeature(name string) bool {
+	_, ok := c.FeatureSet()[name]
+	return ok
 }

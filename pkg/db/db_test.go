@@ -39,6 +39,8 @@ func TestMigrationsSQLite(t *testing.T) {
 
 	assertTableExists(t, database, "audit_events")
 	assertTableExists(t, database, "envelope_canary")
+	assertTableExists(t, database, "users")
+	assertTableExists(t, database, "sessions")
 }
 
 func assertTableExists(t *testing.T, db *sql.DB, name string) {
@@ -114,6 +116,8 @@ func TestMigrationsPostgresFromEnv(t *testing.T) {
 
 	assertTableExistsPostgres(t, database, "audit_events")
 	assertTableExistsPostgres(t, database, "envelope_canary")
+	assertTableExistsPostgres(t, database, "users")
+	assertTableExistsPostgres(t, database, "sessions")
 }
 
 func assertTableExistsPostgres(t *testing.T, database *sql.DB, name string) {

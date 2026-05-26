@@ -56,6 +56,16 @@ func TestLoadRejectsUnsupportedDatabaseURLScheme(t *testing.T) {
 	}
 }
 
+func TestHasFeature(t *testing.T) {
+	cfg := &config.Config{Features: "swarm_readonly,other"}
+	if !cfg.HasFeature("swarm_readonly") {
+		t.Fatal("expected swarm_readonly enabled")
+	}
+	if cfg.HasFeature("stack_deploy") {
+		t.Fatal("expected stack_deploy disabled")
+	}
+}
+
 func TestResolvedSQLitePathCaseInsensitiveScheme(t *testing.T) {
 	t.Setenv("STOWKEEP_DATABASE_URL", "SQLite:///tmp/stowkeep.db")
 	t.Setenv("STOWKEEP_DATABASE_DRIVER", "")
