@@ -1,10 +1,36 @@
-/** Root shell page for Stage 0 — proves embed.FS and dev proxy wiring. */
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./auth/AuthProvider";
+import { GuestOnly, RequireAuth, SetupOnly } from "./auth/RouteGuards";
+import { DashboardLayout } from "./layouts/DashboardLayout";
+import LoginPage from "./pages/Login";
+import SetupPage from "./pages/Setup";
+import StackDetailPage, { SettingsPage } from "./pages/StackDetail";
+import NodesPage, { ServicesPage, StacksPage, TasksPage } from "./pages/SwarmPages";
+
+/** Application routes. */
 export default function App() {
   return (
-    <main className="mx-auto max-w-xl px-8 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Stowkeep</h1>
-      <p className="mt-4 text-slate-700">Self-hosted control plane for Docker Swarm.</p>
-      <p className="mt-2 text-sm text-slate-500">Stage 0 foundation — API and UI scaffold.</p>
-    </main>
+    <AuthProvider>
+      <Routes>
+        <Route element={<SetupOnly />}>
+          <Route path="/setup" element={<SetupPage />} />
+        </Route>
+        <Route element={<GuestOnly />}>
+          <Route path="/login" element={<LoginPage />} />
+        </Route>
+        <Route element={<RequireAuth />}>
+          <Route element={<DashboardLayout />}>
+            <Route index element={<Navigate to="/nodes" replace />} />
+            <Route path="/nodes" element={<NodesPage />} />
+            <Route path="/services" element={<ServicesPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/stacks" element={<StacksPage />} />
+            <Route path="/stacks/:name" element={<StackDetailPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }
