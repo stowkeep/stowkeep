@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError, type User } from "../api/client";
-import { AuthContext, type AuthContextValue } from "./authContext";
+import { AuthContext } from "./authContext";
 
 /** Provides session state and auth actions to the app. */
 export function AuthProvider({ children }: { children: React.ReactNode }) {

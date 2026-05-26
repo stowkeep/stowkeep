@@ -33,7 +33,8 @@ func HashToken(plain string) string {
 
 // SetSessionCookie writes the session cookie on the response.
 func SetSessionCookie(w http.ResponseWriter, token string, expiresAt time.Time, secure bool) {
-	http.SetCookie(w, &http.Cookie{
+	// Secure is runtime-configured (false for local HTTP dev; true in production).
+	http.SetCookie(w, &http.Cookie{ // #nosec G124
 		Name:     CookieName,
 		Value:    token,
 		Path:     "/",
@@ -46,7 +47,7 @@ func SetSessionCookie(w http.ResponseWriter, token string, expiresAt time.Time, 
 
 // ClearSessionCookie removes the session cookie.
 func ClearSessionCookie(w http.ResponseWriter, secure bool) {
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(w, &http.Cookie{ // #nosec G124
 		Name:     CookieName,
 		Value:    "",
 		Path:     "/",

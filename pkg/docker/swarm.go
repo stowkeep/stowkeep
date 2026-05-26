@@ -234,9 +234,6 @@ func mapTask(task swarm.Task) Task {
 		exitCode = int(task.Status.ContainerStatus.ExitCode)
 	}
 	errMsg := task.Status.Err
-	if task.Status.ContainerStatus != nil && task.Status.ContainerStatus.PID != 0 && errMsg == "" {
-		// keep err empty for running tasks
-	}
 	return Task{
 		ID:        task.ID,
 		ServiceID: task.ServiceID,
