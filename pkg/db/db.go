@@ -66,7 +66,7 @@ func resolveDSN(cfg *config.Config) (string, string, error) {
 		case strings.HasPrefix(lower, "postgres://"), strings.HasPrefix(lower, "postgresql://"):
 			return "pgx", cfg.DatabaseURL, nil
 		case strings.HasPrefix(lower, "sqlite://"):
-			path := strings.TrimPrefix(cfg.DatabaseURL, "sqlite://")
+			path := cfg.DatabaseURL[len("sqlite://"):]
 			return "sqlite", "file:" + path + "?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)", nil
 		default:
 			return "", "", fmt.Errorf("unsupported database URL scheme in %q", cfg.DatabaseURL)

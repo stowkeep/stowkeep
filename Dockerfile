@@ -2,8 +2,8 @@
 
 FROM node:22-alpine AS web-build
 WORKDIR /src/web
-COPY web/package.json web/package-lock.json* ./
-RUN npm ci --ignore-scripts 2>/dev/null || npm install
+COPY web/package.json web/package-lock.json ./
+RUN npm ci --ignore-scripts
 COPY web/ ./
 RUN npm run build
 
@@ -13,6 +13,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+COPY --from=web-build /src/pkg/web/dist /src/pkg/web/dist
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -o /out/stowkeep ./cmd/stowkeep
 
 FROM gcr.io/distroless/static-debian12:nonroot

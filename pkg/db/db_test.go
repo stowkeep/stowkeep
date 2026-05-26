@@ -72,6 +72,24 @@ func TestOpenCreatesSQLiteFile(t *testing.T) {
 	}
 }
 
+func TestOpenSQLiteURLCaseInsensitiveScheme(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "case.db")
+	cfg := &config.Config{DatabaseURL: "SQLite://" + path}
+
+	database, err := db.Open(cfg)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	if err := database.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("expected db file at %s: %v", path, err)
+	}
+}
+
 func TestMigrationsPostgresFromEnv(t *testing.T) {
 	url := os.Getenv("STOWKEEP_DATABASE_URL")
 	if url == "" {

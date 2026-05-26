@@ -45,3 +45,26 @@ func TestLoadPostgresFromURL(t *testing.T) {
 		t.Fatalf("ResolvedDriver() = %q, want postgres", cfg.ResolvedDriver())
 	}
 }
+
+func TestLoadRejectsUnsupportedDatabaseURLScheme(t *testing.T) {
+	t.Setenv("STOWKEEP_DATABASE_URL", "mysql://user:pass@localhost:3306/stowkeep")
+	t.Setenv("STOWKEEP_DATABASE_DRIVER", "")
+
+	_, err := config.Load()
+	if err == nil {
+		t.Fatal("expected error for unsupported database URL scheme")
+	}
+}
+
+func TestResolvedSQLitePathCaseInsensitiveScheme(t *testing.T) {
+	t.Setenv("STOWKEEP_DATABASE_URL", "SQLite:///tmp/stowkeep.db")
+	t.Setenv("STOWKEEP_DATABASE_DRIVER", "")
+
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.ResolvedSQLitePath() != "/tmp/stowkeep.db" {
+		t.Fatalf("ResolvedSQLitePath() = %q, want /tmp/stowkeep.db", cfg.ResolvedSQLitePath())
+	}
+}

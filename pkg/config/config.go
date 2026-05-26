@@ -38,7 +38,13 @@ func Load() (*Config, error) {
 
 func (c *Config) validate() error {
 	if c.DatabaseURL != "" {
-		return nil
+		lower := strings.ToLower(c.DatabaseURL)
+		switch {
+		case strings.HasPrefix(lower, "postgres://"), strings.HasPrefix(lower, "postgresql://"), strings.HasPrefix(lower, "sqlite://"):
+			return nil
+		default:
+			return fmt.Errorf("unsupported STOWKEEP_DATABASE_URL scheme in %q", c.DatabaseURL)
+		}
 	}
 	driver := strings.ToLower(strings.TrimSpace(c.DatabaseDriver))
 	if driver == "" || driver == "sqlite" {
@@ -70,8 +76,9 @@ func (c *Config) ResolvedDriver() string {
 
 // ResolvedSQLitePath returns the SQLite database file path.
 func (c *Config) ResolvedSQLitePath() string {
-	if c.DatabaseURL != "" && strings.HasPrefix(strings.ToLower(c.DatabaseURL), "sqlite://") {
-		return strings.TrimPrefix(c.DatabaseURL, "sqlite://")
+	const sqlitePrefix = "sqlite://"
+	if c.DatabaseURL != "" && strings.HasPrefix(strings.ToLower(c.DatabaseURL), sqlitePrefix) {
+		return c.DatabaseURL[len(sqlitePrefix):]
 	}
 	if c.DatabasePath != "" {
 		return c.DatabasePath

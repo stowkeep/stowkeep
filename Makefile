@@ -53,7 +53,7 @@ lint-web:
 	@cd web && npm run lint && npm run typecheck
 
 migrate-up:
-	@go run ./cmd/stowkeep --migrate-only 2>/dev/null || goose -dir migrations/sqlite sqlite "$${STOWKEEP_DATABASE_PATH:-./.data/dev.db}" up
+	@goose -dir migrations/sqlite sqlite "$${STOWKEEP_DATABASE_PATH:-./.data/dev.db}" up
 
 docker-build:
 	@docker build -t stowkeep:local .

@@ -54,3 +54,18 @@ func TestPostgresDumperRequiresURL(t *testing.T) {
 		t.Fatal("expected error for empty database URL")
 	}
 }
+
+func TestSQLiteBackupRequiresConnection(t *testing.T) {
+	err := backup.SQLiteBackup(context.Background(), nil, t.TempDir()+"/backup.db")
+	if err == nil {
+		t.Fatal("expected error for nil database connection")
+	}
+}
+
+func TestPostgresDumperRequiresWriter(t *testing.T) {
+	dumper := backup.PostgresDumper{}
+	err := dumper.Stream(context.Background(), "postgres://user:pass@localhost:5432/stowkeep?sslmode=disable", nil)
+	if err == nil {
+		t.Fatal("expected error for nil output writer")
+	}
+}

@@ -59,9 +59,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	serveErr := make(chan error, 1)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("HTTP server stopped", slog.String("error", err.Error()))
+			serveErr <- err
 			stop()
 		}
 	}()
@@ -71,5 +73,12 @@ func main() {
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("shutdown error", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	select {
+	case err := <-serveErr:
+		logger.Error("HTTP server failed", slog.String("error", err.Error()))
+		os.Exit(1)
+	default:
 	}
 }
