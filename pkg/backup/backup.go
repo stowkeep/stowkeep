@@ -16,8 +16,8 @@ func SQLiteBackup(ctx context.Context, src *sql.DB, destPath string) error {
 	if src == nil {
 		return fmt.Errorf("database connection is required")
 	}
-	//nolint:gosec // G201: destPath is an operator-controlled backup destination, not user SQL input.
-	query := fmt.Sprintf("VACUUM INTO %q", destPath)
+	// destPath is an operator-controlled backup destination, not user SQL input.
+	query := fmt.Sprintf("VACUUM INTO %q", destPath) // #nosec G201
 	if _, err := src.ExecContext(ctx, query); err != nil {
 		return fmt.Errorf("sqlite backup: %w", err)
 	}
@@ -41,8 +41,8 @@ func (d PostgresDumper) Stream(ctx context.Context, databaseURL string, w io.Wri
 	if bin == "" {
 		bin = "pg_dump"
 	}
-	//nolint:gosec // G204: pg_dump path and database URL come from server config, not request input.
-	cmd := exec.CommandContext(ctx, bin, "--no-owner", "--no-acl", databaseURL)
+	// pg_dump path and database URL come from server config, not request input.
+	cmd := exec.CommandContext(ctx, bin, "--no-owner", "--no-acl", databaseURL) // #nosec G204
 	cmd.Stdout = w
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
