@@ -2,7 +2,7 @@
 
 How to set up a local Stowkeep development environment.
 
-> **Status:** Stage 0 scaffold — commands below match the Makefile in the repository root.
+> **Status:** Stage 1 — Swarm read-only dashboard. See [install.md](./install.md) for operator setup.
 
 ---
 

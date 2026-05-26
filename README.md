@@ -31,6 +31,7 @@ docker run -d \
   -v stowkeep-data:/data \
   -e STOWKEEP_DATABASE_DRIVER=sqlite \
   -e STOWKEEP_DATABASE_PATH=/data/stowkeep.db \
+  -e STOWKEEP_FEATURES=swarm_readonly \
   ghcr.io/stowkeep/stowkeep:latest
 ```
 
@@ -44,6 +45,7 @@ Open `http://localhost:8080` and complete first-run setup.
 
 | Topic                     | Link                                                           |
 | ------------------------- | -------------------------------------------------------------- |
+| Install & first-run       | [docs/install.md](docs/install.md)                             |
 | Development setup         | [docs/development-guide.md](docs/development-guide.md)         |
 | SQLite vs PostgreSQL      | [docs/database.md](docs/database.md)                           |
 | Production logging        | [docs/logging.md](docs/logging.md)                             |
@@ -60,7 +62,7 @@ Open `http://localhost:8080` and complete first-run setup.
 
 ## Project status
 
-> **Pre-alpha — not for production hosting of workloads or secrets you cannot afford to lose.** Stowkeep is maintained by a single developer. Stage 0 foundation code (API skeleton, CI, migrations) is landing; user-visible Swarm features begin at Stage 1. The community files (`CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue templates) are forward-looking — we are not actively seeking contributors yet, but ideas and feedback are very welcome via Issues. The project is Apache 2.0 from day 1; a contributor workflow opens up around `v0.1.0`. Live decisions and roadmap deferrals live in [planning/decisions-todo.md](planning/decisions-todo.md).
+> **Pre-alpha — not for production hosting of workloads or secrets you cannot afford to lose.** Stage 1 ships a read-only Swarm dashboard with local admin auth. See [docs/install.md](docs/install.md) for setup.
 
 ## Contributing
 

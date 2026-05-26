@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Stage 1 — Swarm read-only dashboard**
+  - Local admin auth: bootstrap setup, login/logout, DB-backed sessions (`pkg/auth`)
+  - Docker Swarm read API: nodes, services, tasks, stacks (`pkg/docker`, `/api/v1/swarm/*`)
+  - Feature flag `swarm_readonly` gates Swarm routes
+  - React dashboard: nodes/services/tasks/stacks views, stack detail, task polling (8s), Docker unreachable banner
+  - OpenAPI spec updated for Stage 1 endpoints
+  - CI: Docker integration test job with Swarm init
+  - User docs: [docs/install.md](docs/install.md)
+
 - **Stage 0 application scaffold:** Go API server (`cmd/stowkeep`), React/Vite frontend (`web/`), embedded SPA via `pkg/web` + `embed.FS`
 - HTTP endpoints: `GET /healthz`, `GET /readyz`, `GET /api/v1/version`
 - Structured logging (`pkg/observability/log`) with request ID correlation and access-log scrubbing tests
