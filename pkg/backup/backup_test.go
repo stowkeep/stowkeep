@@ -3,6 +3,7 @@ package backup_test
 import (
 	"context"
 	"database/sql"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -67,5 +68,13 @@ func TestPostgresDumperRequiresWriter(t *testing.T) {
 	err := dumper.Stream(context.Background(), "postgres://user:pass@localhost:5432/stowkeep?sslmode=disable", nil)
 	if err == nil {
 		t.Fatal("expected error for nil output writer")
+	}
+}
+
+func TestPostgresDumperRejectsInvalidURL(t *testing.T) {
+	dumper := backup.PostgresDumper{}
+	err := dumper.Stream(context.Background(), "://invalid", io.Discard)
+	if err == nil {
+		t.Fatal("expected error for invalid database URL")
 	}
 }

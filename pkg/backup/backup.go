@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"net/url"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -41,8 +43,15 @@ func (d PostgresDumper) Stream(ctx context.Context, databaseURL string, w io.Wri
 	if bin == "" {
 		bin = "pg_dump"
 	}
+	dsn, extraEnv, err := preparePgDumpURL(databaseURL)
+	if err != nil {
+		return err
+	}
 	// pg_dump path and database URL come from server config, not request input.
-	cmd := exec.CommandContext(ctx, bin, "--no-owner", "--no-acl", databaseURL) // #nosec G204
+	cmd := exec.CommandContext(ctx, bin, "--no-owner", "--no-acl", dsn) // #nosec G204
+	if len(extraEnv) > 0 {
+		cmd.Env = append(os.Environ(), extraEnv...)
+	}
 	cmd.Stdout = w
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -54,4 +63,19 @@ func (d PostgresDumper) Stream(ctx context.Context, databaseURL string, w io.Wri
 		return fmt.Errorf("pg_dump: %w", err)
 	}
 	return nil
+}
+
+func preparePgDumpURL(databaseURL string) (string, []string, error) {
+	u, err := url.Parse(databaseURL)
+	if err != nil {
+		return "", nil, fmt.Errorf("invalid database URL: %w", err)
+	}
+	var extraEnv []string
+	if u.User != nil {
+		if password, ok := u.User.Password(); ok && password != "" {
+			extraEnv = append(extraEnv, "PGPASSWORD="+password)
+			u.User = url.User(u.User.Username())
+		}
+	}
+	return u.String(), extraEnv, nil
 }
