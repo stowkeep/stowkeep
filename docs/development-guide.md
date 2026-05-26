@@ -184,5 +184,3 @@ npm run typecheck
 
 - [GitHub Discussions](https://github.com/stowkeep/stowkeep/discussions) — questions
 - [GitHub Issues](https://github.com/stowkeep/stowkeep/issues) — bugs and features
-
-Replace `stowkeep` with the actual GitHub organization when the repo is published.

@@ -106,4 +106,3 @@ By contributing, you agree that your contributions will be licensed under the [A
 - **How do I…?** — [GitHub Discussions](https://github.com/stowkeep/stowkeep/discussions)
 - **Bug / feature** — [GitHub Issues](https://github.com/stowkeep/stowkeep/issues)
 
-Replace `stowkeep` with the actual GitHub organization when published.

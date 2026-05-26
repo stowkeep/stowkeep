@@ -4,8 +4,8 @@ Self-hosted control plane for **Docker Swarm** — cluster UI, GitOps, secrets, 
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-> *Stow* — to put something in a place where it can be kept safely.
-> *Keep* — to maintain; also, a castle's fortified inner tower.
+> _Stow_ — to put something in a place where it can be kept safely.
+> _Keep_ — to maintain; also, a castle's fortified inner tower.
 > **Stowkeep** is the keeper of what you have stowed — your stacks, secrets, GitOps state, audit log, and backups.
 
 ## What it does
@@ -42,19 +42,19 @@ Open `http://localhost:8080` and complete first-run setup.
 
 ## Documentation
 
-| Topic | Link |
-|-------|------|
-| Development setup | [docs/development-guide.md](docs/development-guide.md) |
-| SQLite vs PostgreSQL | [docs/database.md](docs/database.md) |
-| Production logging | [docs/logging.md](docs/logging.md) |
-| Security threat model | [docs/security/threat-model.md](docs/security/threat-model.md) |
-| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Code standards | [docs/code-standards.md](docs/code-standards.md) |
-| Product roadmap | [planning/PRD.md](planning/PRD.md) |
-| Phase gates (quality bar) | [planning/phase-gates.md](planning/phase-gates.md) |
-| AI agent instructions | [AGENTS.md](AGENTS.md) |
-| Project decisions tracker | [planning/decisions-todo.md](planning/decisions-todo.md) |
-| Security | [SECURITY.md](SECURITY.md) |
+| Topic                     | Link                                                           |
+| ------------------------- | -------------------------------------------------------------- |
+| Development setup         | [docs/development-guide.md](docs/development-guide.md)         |
+| SQLite vs PostgreSQL      | [docs/database.md](docs/database.md)                           |
+| Production logging        | [docs/logging.md](docs/logging.md)                             |
+| Security threat model     | [docs/security/threat-model.md](docs/security/threat-model.md) |
+| Contributing              | [CONTRIBUTING.md](CONTRIBUTING.md)                             |
+| Code standards            | [docs/code-standards.md](docs/code-standards.md)               |
+| Product roadmap           | [planning/PRD.md](planning/PRD.md)                             |
+| Phase gates (quality bar) | [planning/phase-gates.md](planning/phase-gates.md)             |
+| AI agent instructions     | [AGENTS.md](AGENTS.md)                                         |
+| Project decisions tracker | [planning/decisions-todo.md](planning/decisions-todo.md)       |
+| Security                  | [SECURITY.md](SECURITY.md)                                     |
 
 ## Project status
 
@@ -67,5 +67,3 @@ Ideas, issues, and feedback are welcome via [GitHub Issues](https://github.com/s
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
-
-Replace `stowkeep` with your GitHub organization when the repository is published.
