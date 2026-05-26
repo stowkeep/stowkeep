@@ -1,0 +1,28 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+      # Stage 0 stub uses XOR placeholder until Stage 4 AES-GCM; not production crypto.
+      - path: pkg/secrets/keyprovider\.go
+        linters:
+          - gosec
+      # Backup paths and pg_dump are intentional; validated in unit tests and CI gosec step.
+      - path: pkg/backup/backup\.go
+        linters:
+          - gosec

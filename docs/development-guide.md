@@ -2,7 +2,7 @@
 
 How to set up a local Stowkeep development environment.
 
-> **Status:** Stage 0 scaffold — commands below describe the target workflow; some targets are added as implementation lands.
+> **Status:** Stage 0 scaffold — commands below match the Makefile in the repository root.
 
 ---
 
@@ -10,7 +10,7 @@ How to set up a local Stowkeep development environment.
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Go | 1.23+ | Backend |
+| Go | 1.25+ | Backend (see `go.mod`; CI uses 1.25.10+) |
 | Node.js | 22 LTS | Frontend |
 | Docker | 24+ | Engine API + optional Swarm |
 | Make | any | Task runner |
@@ -83,10 +83,10 @@ See [database.md](./database.md) for production vs embedded guidance.
 
 ```
 stowkeep/
-├── api/              # HTTP server entrypoint
+├── cmd/stowkeep/     # HTTP server entrypoint
 ├── pkg/              # Reusable Go packages
-├── web/              # React frontend
-├── migrations/       # goose SQL migrations (shared + dialect-specific)
+├── web/              # React frontend (Vite + Tailwind; shadcn/ui ready)
+├── migrations/       # goose SQL migrations (sqlite/ + postgres/)
 ├── docs/             # User and contributor documentation
 ├── planning/         # PRD and engineering plans
 ├── deploy/           # Reference Compose / Swarm stacks

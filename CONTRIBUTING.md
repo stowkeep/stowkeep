@@ -2,6 +2,16 @@
 
 Thank you for your interest in contributing. Stowkeep aims to be **as open source as open source gets** — clear docs, tested code, and a welcoming community.
 
+## Pre-alpha contributor policy (OPEN-005)
+
+Stowkeep is in **pre-alpha** (before `v0.1.0`). During this phase:
+
+- **Issues and Discussions are welcome** — bug reports, ideas, and deployment feedback help shape the product.
+- **Pull requests are not actively accepted** until `v0.1.0`. The maintainer is building the foundation solo; unsolicited PRs may be closed with a pointer to open an issue first.
+- **Security reports are always welcome** — follow [SECURITY.md](SECURITY.md) for responsible disclosure via `contact@stowkeep.dev`.
+
+After `v0.1.0`, the full workflow below (fork → branch → PR → review) opens up. See [GOVERNANCE.md](GOVERNANCE.md) for maintainer and decision-making details.
+
 ## Before you start
 
 1. Read [AGENTS.md](AGENTS.md) if you are an automated coding agent
