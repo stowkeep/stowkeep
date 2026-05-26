@@ -39,7 +39,11 @@ func main() {
 		logger.Error("failed to connect database", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	defer database.Close()
+	defer func() {
+		if err := database.Close(); err != nil {
+			logger.Error("failed to close database", slog.String("error", err.Error()))
+		}
+	}()
 
 	migrationsRoot := cfg.MigrationsDir
 	if migrationsRoot == "" {

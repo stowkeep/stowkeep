@@ -22,3 +22,7 @@ linters:
       - path: pkg/secrets/keyprovider\.go
         linters:
           - gosec
+      # Backup paths and pg_dump are intentional; validated in unit tests and CI gosec step.
+      - path: pkg/backup/backup\.go
+        linters:
+          - gosec

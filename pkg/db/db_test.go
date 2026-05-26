@@ -26,7 +26,11 @@ func TestMigrationsSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer database.Close()
+	t.Cleanup(func() {
+		if err := database.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	migrationsRoot := filepath.Join("..", "..", "migrations")
 	if err := db.Up(database, "sqlite", migrationsRoot); err != nil {
@@ -59,7 +63,9 @@ func TestOpenCreatesSQLiteFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	database.Close()
+	if err := database.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
 
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("expected db file: %v", err)
@@ -77,7 +83,11 @@ func TestMigrationsPostgresFromEnv(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer database.Close()
+	t.Cleanup(func() {
+		if err := database.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	migrationsRoot := filepath.Join("..", "..", "migrations")
 	if err := db.Up(database, "postgres", migrationsRoot); err != nil {

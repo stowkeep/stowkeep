@@ -29,7 +29,6 @@ type Server struct {
 func New(cfg *config.Config, logger *slog.Logger, db *sql.DB) *Server {
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
-	r.Use(chimw.RealIP)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.AccessLog(logger))
 

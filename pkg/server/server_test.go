@@ -45,6 +45,10 @@ func testServer(t *testing.T) *server.Server {
 	if err != nil {
 		t.Fatalf("db open: %v", err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() {
+		if err := database.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 	return server.New(cfg, logger, database)
 }

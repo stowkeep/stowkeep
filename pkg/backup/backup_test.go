@@ -21,7 +21,11 @@ func TestSQLiteBackupCreatesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open src: %v", err)
 	}
-	defer src.Close()
+	t.Cleanup(func() {
+		if err := src.Close(); err != nil {
+			t.Errorf("close src: %v", err)
+		}
+	})
 
 	if _, err := src.Exec(`CREATE TABLE IF NOT EXISTS health_check (id INTEGER PRIMARY KEY, ok TEXT NOT NULL)`); err != nil {
 		t.Fatalf("create table: %v", err)
