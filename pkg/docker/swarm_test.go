@@ -2,7 +2,6 @@ package docker
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -69,18 +68,24 @@ func TestMapServiceNilContainerSpec(t *testing.T) {
 
 func TestGetStackNotFound(t *testing.T) {
 	services := []Service{{ID: "svc1", Name: "web_api", Stack: "web"}}
-	counts := make(map[string]int)
-	for _, svc := range services {
-		if svc.Stack != "" {
-			counts[svc.Stack]++
-		}
-	}
-	if len(counts) == 0 {
-		t.Fatal("expected stack counts")
-	}
-	err := fmt.Errorf("%w: %q", ErrStackNotFound, "missing")
+	_, err := stackFromServices(services, "missing")
 	if !errors.Is(err, ErrStackNotFound) {
-		t.Fatalf("errors.Is = false for %v", err)
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestGetStackFound(t *testing.T) {
+	services := []Service{
+		{ID: "svc1", Name: "web_api", Stack: "web"},
+		{ID: "svc2", Name: "web_db", Stack: "web"},
+		{ID: "svc3", Name: "other_api", Stack: "other"},
+	}
+	detail, err := stackFromServices(services, "web")
+	if err != nil {
+		t.Fatalf("stackFromServices: %v", err)
+	}
+	if detail.Name != "web" || len(detail.Services) != 2 {
+		t.Fatalf("detail = %+v", detail)
 	}
 }
 

@@ -18,6 +18,10 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	// ErrSessionNotFound is returned when a session token is unknown or expired.
 	ErrSessionNotFound = errors.New("session not found")
+	// ErrInvalidEmail is returned when bootstrap email is missing.
+	ErrInvalidEmail = errors.New("email is required")
+	// ErrInvalidPassword is returned when bootstrap password is too short.
+	ErrInvalidPassword = errors.New("password must be at least 8 characters")
 )
 
 // User is a local account.
@@ -62,10 +66,10 @@ func (s *Store) UserCount(ctx context.Context) (int, error) {
 func (s *Store) CreateBootstrapAdmin(ctx context.Context, email, password string) (*User, error) {
 	email = normalizeEmail(email)
 	if email == "" {
-		return nil, fmt.Errorf("email is required")
+		return nil, ErrInvalidEmail
 	}
 	if len(password) < 8 {
-		return nil, fmt.Errorf("password must be at least 8 characters")
+		return nil, ErrInvalidPassword
 	}
 
 	hash, err := HashPassword(password)

@@ -75,6 +75,9 @@ func decodeArgon2Hash(encoded string) (argonParams, []byte, []byte, error) {
 	if err != nil {
 		return argonParams{}, nil, nil, fmt.Errorf("%w: decode hash: %v", ErrInvalidPasswordHash, err)
 	}
+	if len(salt) == 0 || len(hash) == 0 {
+		return argonParams{}, nil, nil, ErrInvalidPasswordHash
+	}
 	params.keyLen = uint32(len(hash)) // #nosec G115 -- key length comes from decoded hash bytes
 	return params, salt, hash, nil
 }

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -79,7 +78,7 @@ func (h *Handler) SetupAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		if isBootstrapValidationError(err) {
+		if errors.Is(err, ErrInvalidEmail) || errors.Is(err, ErrInvalidPassword) {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -183,9 +182,4 @@ func (h *Handler) issueSession(w http.ResponseWriter, ctx context.Context, user 
 	}
 	SetSessionCookie(w, plain, expiresAt, h.cfg.CookieSecure)
 	return nil
-}
-
-func isBootstrapValidationError(err error) bool {
-	msg := err.Error()
-	return msg == "email is required" || strings.HasPrefix(msg, "password must be")
 }

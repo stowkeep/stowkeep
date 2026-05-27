@@ -147,6 +147,10 @@ func (c *Client) GetStack(ctx context.Context, name string) (*StackDetail, error
 	if err != nil {
 		return nil, err
 	}
+	return stackFromServices(services, name)
+}
+
+func stackFromServices(services []Service, name string) (*StackDetail, error) {
 	var matched []Service
 	for _, svc := range services {
 		if svc.Stack == name {

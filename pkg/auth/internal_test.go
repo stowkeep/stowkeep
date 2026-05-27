@@ -128,6 +128,13 @@ func TestDecodeArgon2InvalidBase64(t *testing.T) {
 	}
 }
 
+func TestDecodeArgon2EmptySaltOrHash(t *testing.T) {
+	_, _, _, err := decodeArgon2Hash("$argon2id$v=19$m=65536,t=3,p=4$$")
+	if err != ErrInvalidPasswordHash {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestDecodeArgon2WrongParts(t *testing.T) {
 	_, _, _, err := decodeArgon2Hash("$argon2id$v=19$m=65536")
 	if err != ErrInvalidPasswordHash {
