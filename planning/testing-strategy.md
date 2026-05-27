@@ -1,7 +1,7 @@
 # Testing Strategy
 
 **Project:** Stowkeep  
-**Last updated:** 2026-05-25
+**Last updated:** 2026-05-26
 
 This document defines testing frameworks, the test pyramid, environments, quality gates, and stage-specific test plans.
 
@@ -209,6 +209,8 @@ Every `release-image` build asserts (and fails on missing):
 
 **Fixtures:** `testdata/compose/valid-stack.yml`, `invalid-stack.yml`
 
+**Stage 1 status (PR #14):** `pkg/docker` has unit tests for mappers (`mapService`, `mapNode`, `mapTask`) and `stackFromServices` (not-found/found). CI job `test-go-docker` runs Swarm integration with `STOWKEEP_INTEGRATION_DOCKER=1`. HTTP handler behavior tests for list endpoints are tracked in [§14.1](#141-swarm-http-handler-behavior-pkgserver).
+
 ### 6.2 Authentication (`pkg/auth`)
 
 **Unit**
@@ -222,6 +224,8 @@ Every `release-image` build asserts (and fails on missing):
 - Login → cookie → authorized request
 - Expired session → 401
 - Bootstrap admin only on empty DB
+
+**Stage 1 status (PR #14):** Handler and store tests cover bootstrap, login, session middleware (401 vs 500), rate limiting, and Argon2 verification. Frontend auth routing follow-ups are in [§14.2](#142-app-routing-and-route-guards-websrc).
 
 ### 6.3 RBAC (`pkg/rbac`)
 
@@ -439,3 +443,79 @@ Stage completion requires the **testing pillar** of [phase-gates.md](./phase-gat
 | **Before next stage** | Gate issue opened; CI green on `main`; maintainer sign-off |
 
 Stage-specific automated test requirements are listed in [phase-gates.md §3](./phase-gates.md#stage-gate-checklists).
+
+---
+
+## 14. Stage 1 follow-up test backlog
+
+Tracked during [PR #14](https://github.com/stowkeep/stowkeep/pull/14) review (2026-05-26). These items were intentionally deferred from the Stage 1 PR to keep review scope focused. Revisit before signing the Stage 1 phase gate or in the first hardening PR after merge.
+
+### 14.1 Swarm HTTP handler behavior (`pkg/server`)
+
+**Shipped in PR #14**
+
+| Area | Tests | Location |
+|------|-------|----------|
+| Feature flag | `swarm_readonly` off → 404 when authenticated | `pkg/server/swarm_test.go` |
+| Auth gate | Unauthenticated → 401 on status + list endpoints | `pkg/server/swarm_test.go`, `auth_test.go` |
+| Status shape | Authenticated `/swarm/status` returns `docker_host` | `pkg/server/swarm_test.go` |
+| Stack lookup | `stackFromServices` 404/200 without Docker | `pkg/docker/swarm_test.go` |
+
+**Deferred — full endpoint behavior matrix**
+
+| Endpoint | Happy path | Error branches | Why deferred |
+|----------|------------|----------------|--------------|
+| `GET /api/v1/swarm/nodes` | 200 + `items[]` | 502 when Engine unreachable | `test-go` job has no Docker socket; real client returns transport errors, not fixture data |
+| `GET /api/v1/swarm/services` | same | same | same |
+| `GET /api/v1/swarm/tasks` | same; `?service_id=` filter | same | same |
+| `GET /api/v1/swarm/stacks` | same | same | same |
+| `GET /api/v1/swarm/stacks/{name}` | 200 detail | 404 not found; 502 backend failure | 404 logic tested at `stackFromServices` layer; HTTP 404 vs 502 distinction needs injectable backend |
+
+**Planned approach**
+
+1. Introduce a narrow interface (e.g. `SwarmReader`) consumed by `SwarmHandler`, implemented by `pkg/docker.Client` in production.
+2. Add table-driven tests in `pkg/server/swarm_test.go` with a stub returning fixed nodes/services/tasks/stacks or injected errors.
+3. Assert status codes and JSON bodies: 200 + `items`, 404 `stack not found`, 502 `docker request failed`, plus existing 401/404 feature-flag cases.
+4. Optionally add one happy-path case in the existing `test-go-docker` CI job (Swarm already initialized there) as a thin integration smoke test.
+
+**Done when:** Every Stage 1 Swarm route has at least one happy-path and one error-path automated test without flaking on laptops without Docker.
+
+### 14.2 App routing and route guards (`web/src`)
+
+**Shipped in PR #14**
+
+| Scenario | Coverage | Location |
+|----------|----------|----------|
+| Bootstrap complete → login | Heading “Sign in” on `/login` | `web/src/App.test.tsx` |
+| Bootstrap required → setup | Heading “Create admin account” on `/setup` | `web/src/App.test.tsx` |
+| Fetch stub cleanup | `afterEach(() => vi.unstubAllGlobals())` | `web/src/App.test.tsx` |
+| `setupStatus()` failure | Guards default to `needsBootstrap: false` | `web/src/auth/RouteGuards.tsx` |
+
+**Deferred — route/guard matrix**
+
+| Scenario | Entry route | Expected outcome |
+|----------|-------------|------------------|
+| Authenticated home | `/` | Redirect to dashboard (e.g. `/nodes`) |
+| Guest on login | `/login` while session valid | Redirect to `/` or dashboard |
+| Unknown path | `/non-existent` | Redirect per router policy (login or dashboard) |
+| Protected dashboard | `/nodes` without session | Redirect to `/login` |
+| Setup after bootstrap | `/setup` when `needs_bootstrap: false` | Redirect to `/login` |
+
+**Planned approach**
+
+1. Prefer **MSW** handlers (see `web/src/test/mocks/` in §9) over ad-hoc `fetch` stubs for repeatable API responses.
+2. Extend `App.test.tsx` (or split `App.routes.test.tsx`) with one test per row above.
+3. Align with Playwright **E2E-01** (login → nodes list) for nightly confidence once `web/e2e/` exists (§7).
+
+**Done when:** Each guard component (`RequireAuth`, `GuestOnly`, `SetupOnly`) has a dedicated behavior test; wildcard routing is asserted once.
+
+### 14.3 Checklist (loop back)
+
+Use this when picking up the backlog:
+
+- [ ] §14.1 — `SwarmReader` stub + handler table tests for all five list/detail routes
+- [ ] §14.1 — optional `test-go-docker` happy-path smoke for one list endpoint
+- [ ] §14.2 — MSW fixtures for auth/setup/me
+- [ ] §14.2 — five route/guard Vitest cases (matrix above)
+- [ ] §7 — wire Playwright E2E-01 when e2e scaffold lands
+- [ ] Update this section: move completed rows to “Shipped” and delete checklist items
