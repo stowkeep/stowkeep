@@ -53,6 +53,7 @@ Open `http://localhost:8080` and complete first-run setup.
 | Product roadmap           | [planning/PRD.md](planning/PRD.md)                             |
 | Phase gates (quality bar) | [planning/phase-gates.md](planning/phase-gates.md)             |
 | Stage 0 gate checklist  | [docs/stage-0-gate.md](docs/stage-0-gate.md)                   |
+| Stage 1 gate checklist  | [docs/stage-1-gate.md](docs/stage-1-gate.md)                   |
 | Governance              | [GOVERNANCE.md](GOVERNANCE.md)                                 |
 | AI agent instructions     | [AGENTS.md](AGENTS.md)                                         |
 | Project decisions tracker | [planning/decisions-todo.md](planning/decisions-todo.md)       |
