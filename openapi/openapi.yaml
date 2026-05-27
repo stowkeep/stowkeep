@@ -1,8 +1,11 @@
 openapi: 3.1.0
 info:
   title: Stowkeep API
-  version: 0.0.0
+  version: 0.1.0
   description: Self-hosted control plane for Docker Swarm.
+servers:
+  - url: https://stowkeep.example.com
+    description: Production (HTTPS required for session cookies)
 paths:
   /healthz:
     get:
@@ -10,14 +13,6 @@ paths:
       responses:
         "200":
           description: Service is alive
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: ok
   /readyz:
     get:
       summary: Readiness probe
@@ -32,3 +27,153 @@ paths:
       responses:
         "200":
           description: Version metadata
+  /api/v1/setup/status:
+    get:
+      summary: First-run bootstrap status
+      responses:
+        "200":
+          description: Bootstrap status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  needs_bootstrap:
+                    type: boolean
+  /api/v1/setup/admin:
+    post:
+      summary: Create first admin user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Credentials"
+      responses:
+        "201":
+          description: Admin created
+        "409":
+          description: Bootstrap already completed
+  /api/v1/auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Credentials"
+      responses:
+        "200":
+          description: Authenticated
+        "401":
+          description: Invalid credentials
+  /api/v1/auth/logout:
+    post:
+      summary: Logout
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Logged out
+  /api/v1/auth/me:
+    get:
+      summary: Current user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /api/v1/swarm/status:
+    get:
+      summary: Docker and Swarm connectivity
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Status
+        "404":
+          description: Feature disabled
+  /api/v1/swarm/nodes:
+    get:
+      summary: List Swarm nodes
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Node list
+  /api/v1/swarm/services:
+    get:
+      summary: List Swarm services
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Service list
+  /api/v1/swarm/tasks:
+    get:
+      summary: List Swarm tasks
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: service_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task list
+  /api/v1/swarm/stacks:
+    get:
+      summary: List stacks
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Stack list
+  /api/v1/swarm/stacks/{name}:
+    get:
+      summary: Stack detail
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stack detail
+        "404":
+          description: Not found
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: stowkeep_session
+  schemas:
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string

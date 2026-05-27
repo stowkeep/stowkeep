@@ -200,3 +200,28 @@ jobs:
           image-ref: stowkeep:ci
           severity: CRITICAL
           exit-code: 1
+
+  test-go-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Initialize Swarm
+        run: |
+          if ! docker swarm init --advertise-addr 127.0.0.1; then
+            state="$(docker info --format '{{.Swarm.LocalNodeState}}' || true)"
+            if [ "$state" != "active" ]; then
+              echo "Swarm initialization failed and node is not active"
+              exit 1
+            fi
+          fi
+      - name: Docker integration tests
+        env:
+          STOWKEEP_INTEGRATION_DOCKER: "1"
+          STOWKEEP_DOCKER_HOST: unix:///var/run/docker.sock
+        run: go test ./pkg/docker/... -tags=integration -race -count=1 -timeout 5m

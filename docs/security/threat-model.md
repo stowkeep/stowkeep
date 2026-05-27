@@ -183,8 +183,10 @@ We focus on the flows that exist at v1 scope: login, API authz, stack deploy, se
 | **T** | API call modified mid-flight | Local socket = local trust; remote TLS = `tls.Config` with verify-full |
 | **R** | Docker action without app-side record | Every Docker call from Stowkeep originates from a handled request; audit row created before the call |
 | **I** | Docker API responses leak unrelated container info to low-priv users | RBAC filters list responses to allowed scope; integration tests assert filtering |
-| **D** | Slow / blocked Docker daemon hangs reconcilers | All Docker calls use context with timeout; circuit breaker on the engine client; UI banner per D-013 |
+| **D** | Slow / blocked Docker daemon hangs reconcilers | All Docker calls use `context.WithTimeout` (default 30s via `STOWKEEP_DOCKER_TIMEOUT`); UI banner when unreachable (D-013, Stage 1) |
 | **E** | Compose declares privileged: true / host network | Validator rejects (or warns) on privileged primitives; admin-only override; this list maintained per Stowkeep release |
+
+**Stage 1 shipped mitigations:** Session auth on all `/api/v1/swarm/*` routes; Docker list handlers log counts only (never full API bodies at info level); prominent UI banner when `/api/v1/swarm/status` reports disconnected; install guide documents raw socket-mount risk and socket-proxy interim path ([docs/install.md](../install.md)).
 
 ### 4.8 Database access (all stages)
 
