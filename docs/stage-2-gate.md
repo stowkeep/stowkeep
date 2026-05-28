@@ -12,9 +12,11 @@ Copy the checklist from [planning/phase-gates.md](../planning/phase-gates.md#sta
 
 | PR | Title | Status |
 |----|-------|--------|
-| _TBD_ | Stage 2: Deploy and manage stacks | Open |
+| [#18](https://github.com/stowkeep/stowkeep/pull/18) | Stage 2: Deploy and manage stacks | Open — CI green |
 
 **Gate issue:** https://github.com/stowkeep/stowkeep/issues/17
+
+**CI (PR #18):** https://github.com/stowkeep/stowkeep/actions/runs/26547010557
 
 ---
 
