@@ -12,10 +12,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
+	"github.com/stowkeep/stowkeep/pkg/audit"
 	"github.com/stowkeep/stowkeep/pkg/auth"
 	"github.com/stowkeep/stowkeep/pkg/config"
 	"github.com/stowkeep/stowkeep/pkg/docker"
 	"github.com/stowkeep/stowkeep/pkg/http/middleware"
+	"github.com/stowkeep/stowkeep/pkg/rbac"
 	"github.com/stowkeep/stowkeep/pkg/web"
 )
 
@@ -25,6 +27,7 @@ type Server struct {
 	logger *slog.Logger
 	db     *sql.DB
 	auth   *auth.Store
+	audit  *audit.Store
 	docker *docker.Client
 	router chi.Router
 	http   *http.Server
@@ -49,6 +52,8 @@ func New(cfg *config.Config, logger *slog.Logger, db *sql.DB) *Server {
 	}
 
 	swarmHandler := NewSwarmHandler(dockerClient)
+	auditStore := audit.NewStore(db, cfg.ResolvedDriver())
+	stackHandler := NewStackHandler(dockerClient, auditStore, rbac.AdminOnly{})
 
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
@@ -77,6 +82,11 @@ func New(cfg *config.Config, logger *slog.Logger, db *sql.DB) *Server {
 				r.Use(RequireFeature(cfg, "swarm_readonly"))
 				r.Mount("/", swarmHandler.Routes())
 			})
+
+			r.Route("/v1/stacks", func(r chi.Router) {
+				r.Use(RequireFeature(cfg, "stack_deploy"))
+				r.Mount("/", stackHandler.Routes())
+			})
 		})
 	})
 
@@ -88,6 +98,7 @@ func New(cfg *config.Config, logger *slog.Logger, db *sql.DB) *Server {
 		logger: logger,
 		db:     db,
 		auth:   authStore,
+		audit:  auditStore,
 		docker: dockerClient,
 		router: r,
 		http: &http.Server{
@@ -120,9 +131,10 @@ func readyHandler(db *sql.DB) http.HandlerFunc {
 
 func versionHandler(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{
-			"version": cfg.Version,
-			"service": "stowkeep",
+		writeJSON(w, http.StatusOK, map[string]any{
+			"version":  cfg.Version,
+			"service":  "stowkeep",
+			"features": cfg.EnabledFeatures(),
 		})
 	}
 }
@@ -140,6 +152,20 @@ func (s *Server) Handler() http.Handler {
 
 // ListenAndServe starts the HTTP server.
 func (s *Server) ListenAndServe() error {
+	if s.audit != nil {
+		audit.StartVerifier(context.Background(), s.audit, func(res audit.VerifyResult) {
+			s.logger.Error("audit chain integrity failure",
+				slog.String("component", "audit"),
+				slog.Int64("break_at_event_id", res.BreakAtEventID),
+				slog.String("detail", res.Detail),
+			)
+			_ = audit.RecordIntegrityBreak(context.Background(), s.db, s.cfg.ResolvedDriver(), res.BreakAtEventID, res.Detail)
+		})
+	}
+	s.logger.Info("feature flags enabled",
+		slog.String("component", "config"),
+		slog.Any("features", s.cfg.EnabledFeatures()),
+	)
 	s.logger.Info("starting HTTP server",
 		slog.String("component", "http"),
 		slog.String("addr", s.cfg.HTTPAddr),

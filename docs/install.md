@@ -42,11 +42,38 @@ Logout clears the session cookie.
 | `STOWKEEP_DATABASE_URL` | — | PostgreSQL DSN (production) |
 | `STOWKEEP_DOCKER_HOST` | `unix:///var/run/docker.sock` | Docker Engine endpoint |
 | `STOWKEEP_DOCKER_TIMEOUT` | `30s` | Engine API call timeout |
-| `STOWKEEP_FEATURES` | — | Comma-separated flags; set `swarm_readonly` for Stage 1 |
+| `STOWKEEP_FEATURES` | — | Comma-separated capability flags (see below) |
 | `STOWKEEP_SESSION_IDLE_TTL` | `24h` | Session lifetime |
 | `STOWKEEP_COOKIE_SECURE` | `false` | Set `true` behind HTTPS |
 
-See [`.env.example`](../.env.example) for a local development template.
+See [`.env.example`](../.env.example) for local development and [development-guide.md](./development-guide.md) for `.env` loading during `make dev`.
+
+---
+
+## Feature flags
+
+Feature flags are **operator configuration** set via `STOWKEEP_FEATURES` at container/process startup. They are not toggled from the UI.
+
+| Flag | Stage | Enables |
+|------|-------|---------|
+| `swarm_readonly` | 1 | Swarm dashboard API and navigation |
+| `stack_deploy` | 2 | Stack deploy, remove, scale, and logs API |
+| `rbac` | 3 | Multi-user RBAC (future) |
+| `secrets` | 4 | Secret store (future) |
+
+When a flag is disabled, the API returns `404 feature_disabled` on gated routes and the UI hides the related navigation and actions.
+
+Example (read-only dashboard only):
+
+```bash
+-e STOWKEEP_FEATURES=swarm_readonly
+```
+
+Example (Stage 2 — deploy stacks):
+
+```bash
+-e STOWKEEP_FEATURES=swarm_readonly,stack_deploy
+```
 
 ---
 
@@ -59,14 +86,6 @@ See [`.env.example`](../.env.example) for a local development template.
 | Socket proxy (recommended interim) | Proxy container URL | Restricts allowed Docker API verbs |
 
 Stage 1 does **not** expose runtime socket reconfiguration in the UI — change the environment variable and restart.
-
----
-
-## Feature flag: `swarm_readonly`
-
-Swarm API routes and dashboard navigation require `STOWKEEP_FEATURES=swarm_readonly`. Without it, authenticated users receive `404 feature_disabled` on `/api/v1/swarm/*`.
-
-`make dev` enables this flag automatically.
 
 ---
 

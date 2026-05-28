@@ -3,6 +3,7 @@ package server_test
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -33,20 +34,55 @@ func TestHealthz(t *testing.T) {
 	}
 }
 
+func TestListenAndServeLogsEnabledFeatureFlags(t *testing.T) {
+	var logs bytes.Buffer
+	cfg := testConfig(t)
+	cfg.HTTPAddr = "invalid-address"
+	cfg.Features = "swarm_readonly,stack_deploy"
+	srv := newServerWithLogger(t, cfg, slog.New(slog.NewJSONHandler(&logs, nil)))
+
+	if err := srv.ListenAndServe(); err == nil {
+		t.Fatal("expected ListenAndServe error for invalid address")
+	}
+
+	entry := findLogEntry(t, &logs, "feature flags enabled")
+	features, ok := entry["features"].([]any)
+	if !ok {
+		t.Fatalf("features field = %T, want array", entry["features"])
+	}
+	want := []string{"stack_deploy", "swarm_readonly"}
+	if len(features) != len(want) {
+		t.Fatalf("features = %v, want %v", features, want)
+	}
+	for i, name := range want {
+		if features[i] != name {
+			t.Fatalf("features = %v, want %v", features, want)
+		}
+	}
+}
+
 func testServer(t *testing.T) *server.Server {
 	t.Helper()
+	return newServer(t, testConfig(t))
+}
+
+func testConfig(t *testing.T) *config.Config {
+	t.Helper()
 	dir := t.TempDir()
-	cfg := &config.Config{
+	return &config.Config{
 		DatabasePath: filepath.Join(dir, "test.db"),
 		Version:      "test",
 		DockerHost:   "unix:///var/run/docker.sock",
 	}
-	return newServer(t, cfg)
 }
 
 func newServer(t *testing.T, cfg *config.Config) *server.Server {
 	t.Helper()
-	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	return newServerWithLogger(t, cfg, slog.New(slog.NewTextHandler(os.Stderr, nil)))
+}
+
+func newServerWithLogger(t *testing.T, cfg *config.Config, logger *slog.Logger) *server.Server {
+	t.Helper()
 	database, err := db.Open(cfg)
 	if err != nil {
 		t.Fatalf("db open: %v", err)
@@ -60,6 +96,22 @@ func newServer(t *testing.T, cfg *config.Config) *server.Server {
 		t.Fatalf("migrate: %v", err)
 	}
 	return server.New(cfg, logger, database)
+}
+
+func findLogEntry(t *testing.T, r io.Reader, msg string) map[string]any {
+	t.Helper()
+	dec := json.NewDecoder(r)
+	for dec.More() {
+		var entry map[string]any
+		if err := dec.Decode(&entry); err != nil {
+			t.Fatalf("decode log entry: %v", err)
+		}
+		if entry["msg"] == msg {
+			return entry
+		}
+	}
+	t.Fatalf("log entry %q not found", msg)
+	return nil
 }
 
 func bootstrapSession(t *testing.T, srv *server.Server) *http.Cookie {

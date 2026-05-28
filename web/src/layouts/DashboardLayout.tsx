@@ -2,14 +2,15 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/authContext";
 import { DockerBanner } from "../components/DockerBanner";
 import { useDockerStatus } from "../hooks/useDockerStatus";
+import { useFeatures } from "../hooks/useFeatures";
 import { Button } from "../components/ui/primitives";
 import { cn } from "../lib/utils";
 
 const nav = [
-  { to: "/nodes", label: "Nodes" },
-  { to: "/services", label: "Services" },
-  { to: "/tasks", label: "Tasks" },
-  { to: "/stacks", label: "Stacks" },
+  { to: "/nodes", label: "Nodes", feature: "swarm_readonly" as const },
+  { to: "/services", label: "Services", feature: "swarm_readonly" as const },
+  { to: "/tasks", label: "Tasks", feature: "swarm_readonly" as const },
+  { to: "/stacks", label: "Stacks", feature: "swarm_readonly" as const },
   { to: "/settings", label: "Settings" },
 ];
 
@@ -17,7 +18,10 @@ const nav = [
 export function DashboardLayout() {
   const { user, logout } = useAuth();
   const { data: dockerStatus } = useDockerStatus();
+  const { hasFeature } = useFeatures();
   const swarmDisabled = dockerStatus != null && !dockerStatus.connected;
+
+  const visibleNav = nav.filter((item) => !item.feature || hasFeature(item.feature));
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -29,7 +33,7 @@ export function DashboardLayout() {
             <p className="text-xs text-slate-500">Swarm dashboard</p>
           </div>
           <nav className="flex flex-1 flex-col gap-1">
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const isDisabled = swarmDisabled && item.to !== "/settings";
               return (
                 <NavLink

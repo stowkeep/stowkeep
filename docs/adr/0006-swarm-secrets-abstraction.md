@@ -40,6 +40,15 @@ We need a two-layer abstraction.
 
 **Garbage collection** is a periodic job. A Swarm secret is GC-eligible when no service spec (across all stacks SO is responsible for) references its name. GC has a configurable grace period (default 24h) before the actual `docker secret rm`, to allow rollback without a re-encrypt.
 
+### Secret inject modes (Stage 4+)
+
+| Mode | Behavior | Default |
+|------|----------|---------|
+| `file` | Materialize Swarm secret; mount under `/run/secrets/...` | **Yes** |
+| `env` | Inject decrypted value into `ContainerSpec.Env` | Opt-in; less secure |
+
+Native Swarm file mounts do not require Stowkeep-specific `*_FILE` env pointers unless the target application expects them. Legacy images that cannot read file mounts may use opt-in `inject: env` or a future `inject: wrapper` (flavor wall — see [planning/todo.md](../../planning/todo.md)).
+
 **Rollback** is a redeploy with a different `active` version chosen in the SO database. Garbage collection is paused for the now-unreferenced "newer" versions during the grace window.
 
 **Naming constraints:** Swarm secret names are limited to 64 characters. The reconciler validates `len(stack)+len(name)+len("__"+"__v")+len(version) ≤ 64` and rejects deploys that would exceed the limit with a clear error.

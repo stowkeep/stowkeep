@@ -17,7 +17,7 @@ This is a STRIDE-based threat model for the Stowkeep control plane. Its purpose 
 |-------|-------------|----------------|-------|
 | Secret values (plaintext) | **Critical** | In-memory at decrypt time only | Never written to disk, logs, audit payloads, or HTTP responses outside `read_value` flow |
 | Secret ciphertext + DEK | High | Database (SQLite/Postgres) | Encrypted at rest with envelope (DEK per secret version, MEK wraps DEKs) |
-| MEK (master encryption key) | **Critical** | `STOWKEEP_MASTER_KEY` env var (later: KMS) | Loss = unrecoverable secrets; theft = full secret disclosure |
+| MEK (master encryption key) | **Critical** | `STOWKEEP_MASTER_KEY` env or `STOWKEEP_MASTER_KEY_FILE` Swarm mount (later: KMS) | Loss = unrecoverable secrets; theft = full secret disclosure |
 | User credentials | High | Database — argon2id / bcrypt hashed | Never logged, never returned in API responses |
 | Session tokens | High | HTTP-only cookies + DB-backed session table | `HttpOnly`, `Secure`, `SameSite=Lax`/`Strict`; short idle timeout |
 | API tokens | High | Database — hashed at rest | Bearer pattern; revocable; scoped to actions |
@@ -137,7 +137,9 @@ We focus on the flows that exist at v1 scope: login, API authz, stack deploy, se
 | **R** | "I didn't deploy that" | Audit + retained compose snapshot (hash + content) per deploy |
 | **I** | Compose file env block contains secrets that get logged | Compose parser scrubs `environment:` from any log payload; reviewer test (D-021) enforces |
 | **D** | Huge compose / nested YAML bomb | Parser limits: max size (1 MiB default), max depth, max anchors |
-| **E** | Deploy reaches services outside user's allowed env/stack scope | Authz check uses Casbin conditions (environment, stack name) before Docker call |
+| **E** | Deploy reaches services outside user's allowed env/stack scope | Stage 2: `pkg/rbac` admin-only stub on all mutating routes; Stage 3 Casbin conditions enforce env/stack scope |
+
+**Stage 2 implementation (2026-05):** `pkg/compose` enforces 1 MiB / depth / anchor limits; deploy stores compose content hash in audit `after_hash`; mutating routes require `stack_deploy` + session auth.
 
 ### 4.4 Secret create / update / read (Stage 4+)
 

@@ -2,7 +2,7 @@
 
 How to set up a local Stowkeep development environment.
 
-> **Status:** Stage 1 — Swarm read-only dashboard. See [install.md](./install.md) for operator setup.
+> **Status:** Stage 2 — stack deploy. See [install.md](./install.md) for operator setup.
 
 ---
 
@@ -32,9 +32,17 @@ cd stowkeep
 # Install frontend dependencies (once web/ exists)
 cd web && npm ci && cd ..
 
-# Copy example env
+# Copy example env — the API loads .env automatically on startup
 cp .env.example .env
 ```
+
+For Stage 2 stack deploy locally, set in `.env`:
+
+```bash
+STOWKEEP_FEATURES=swarm_readonly,stack_deploy
+```
+
+Process environment variables override `.env` values. Production containers should receive config from the orchestrator (`environment:` / Swarm secrets), not a committed `.env` file.
 
 ---
 
@@ -167,7 +175,7 @@ npm run typecheck
 - **Backend logs:** `STOWKEEP_LOG_LEVEL=debug STOWKEEP_LOG_FORMAT=text make dev`
 - **Production-like logs locally:** `STOWKEEP_LOG_FORMAT=json make dev`
 - **Database:** SQLite → `sqlite3 .data/dev.db`; Postgres → `psql $DATABASE_URL`
-- **Feature flags:** `STOWKEEP_FEATURES=gitops,previews`
+- **Feature flags:** set in `.env` or process env, e.g. `STOWKEEP_FEATURES=swarm_readonly,stack_deploy` (see [install.md](./install.md))
 
 ---
 

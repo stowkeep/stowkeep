@@ -33,3 +33,6 @@ pkg/web/dist/*
 
 # Generated
 openapi/generated/
+
+# Personal planning notes
+planning/todo.md

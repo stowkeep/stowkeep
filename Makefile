@@ -7,7 +7,6 @@ dev:
 
 dev-api:
 	@STOWKEEP_LOG_LEVEL=debug STOWKEEP_LOG_FORMAT=text \
-	 STOWKEEP_FEATURES=swarm_readonly \
 	 STOWKEEP_DATABASE_DRIVER=sqlite STOWKEEP_DATABASE_PATH=./.data/dev.db \
 	 go run ./cmd/stowkeep
 

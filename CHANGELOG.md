@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Local development: optional `.env` loading via `godotenv` in `config.Load()` (process env wins)
+- `GET /api/v1/version` returns enabled `features` from `STOWKEEP_FEATURES`
+- UI hides Swarm and stack-deploy navigation when the corresponding feature flags are disabled
+
+- **Stage 2 — Deploy and manage stacks**
+  - Compose validation via `pkg/compose` (Compose spec; 1 MiB / depth limits)
+  - Stack deploy, remove, service scale, and log streaming (`/api/v1/stacks/*`)
+  - Hash-chained deploy audit events (`pkg/audit`, ADR-0005)
+  - Feature flag `stack_deploy` gates mutating stack routes
+  - RBAC stub (`pkg/rbac`) — admin-only until Stage 3 Casbin enforcement
+  - UI: deploy wizard, stack remove confirmation, scale controls, log viewer
+  - Permission-builder UI prototype ([docs/prototypes/permission-builder.html](docs/prototypes/permission-builder.html)) per D-010
+  - Operator docs: [docs/stacks.md](docs/stacks.md), [docs/audit.md](docs/audit.md)
+
 - **Stage 1 — Swarm read-only dashboard**
   - Local admin auth: bootstrap setup, login/logout, DB-backed sessions (`pkg/auth`)
   - Docker Swarm read API: nodes, services, tasks, stacks (`pkg/docker`, `/api/v1/swarm/*`)

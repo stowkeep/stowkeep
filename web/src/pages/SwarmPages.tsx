@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { DataTable, PageHeader } from "../components/DataTable";
+import { useFeatures } from "../hooks/useFeatures";
 
 /** Swarm nodes list. */
 export default function NodesPage() {
@@ -96,6 +97,7 @@ export function TasksPage() {
 
 /** Deployed stacks list. */
 export function StacksPage() {
+  const { stackDeployEnabled } = useFeatures();
   const { data, isLoading, error } = useQuery({
     queryKey: ["swarm", "stacks"],
     queryFn: async () => (await api.stacks()).items,
@@ -103,7 +105,17 @@ export function StacksPage() {
 
   return (
     <>
-      <PageHeader title="Stacks" description="Compose stacks deployed to Swarm." />
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <PageHeader title="Stacks" description="Compose stacks deployed to Swarm." />
+        {stackDeployEnabled && (
+          <Link
+            to="/stacks/deploy"
+            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Deploy stack
+          </Link>
+        )}
+      </div>
       <DataTable
         loading={isLoading}
         error={error instanceof Error ? error.message : null}

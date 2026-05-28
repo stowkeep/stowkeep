@@ -31,10 +31,17 @@ User and contributor documentation for [Stowkeep](../README.md).
 
 Product and architecture planning lives in [../planning/](../planning/).
 
+## User docs
+
+| Document | Description |
+|----------|-------------|
+| [install.md](./install.md) | First-run bootstrap and Docker socket mount |
+| [configuration.md](./configuration.md) | Environment variables and feature flags |
+| [stacks.md](./stacks.md) | Stack deploy, scale, logs, feature flags |
+| [audit.md](./audit.md) | Hash-chained audit event format |
+
 ## Future docs (as features ship)
 
-- `docs/install.md` — installation paths (SQLite quick-start, Postgres production)
-- `docs/configuration.md` — environment variables reference
 - `docs/stowkeep-yml.md` — GitOps manifest reference
 - `docs/rbac.md` — roles and permissions cookbook
 - `docs/secrets.md` — secrets encryption and rotation

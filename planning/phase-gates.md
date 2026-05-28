@@ -195,14 +195,18 @@ Use this on **every** PR. Same content lives in [.github/pull_request_template.m
 - [ ] describe vs read_value permission tests
 - [ ] Swarm secret materialization integration test
 - [ ] MEK rotation procedure tested (documented path)
+- [ ] `STOWKEEP_*_FILE` resolution tests (env vs file precedence, trim newline, missing file)
+- [ ] MEK input normalization tests (`pkg/secrets/keyinput`: passphrase, hex, base64, raw file bytes)
+- [ ] Startup fails clearly on invalid MEK material
 - [ ] SOPS decrypt test fixture (if D-028 in stage)
 - [ ] Manual: DB dump has no plaintext secrets
 
 **Documentation**
 
-- [ ] `docs/secrets.md` — encryption, rotation, Swarm mapping
+- [ ] `docs/secrets.md` — encryption, rotation, Swarm mapping, inject modes
+- [ ] `docs/configuration.md` — bootstrap env vars and `STOWKEEP_*_FILE`
 - [ ] `docs/secrets-rotation.md` — MEK rotation runbook
-- [ ] MasterKeyProvider documented (ADR-0004)
+- [ ] MasterKeyProvider documented (ADR-0004, ADR-0011)
 
 **Code quality**
 
