@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Stowkeep — Permission builder prototype (D-010)</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #0f172a; background: #f8fafc; }
+    body { max-width: 960px; margin: 0 auto; padding: 2rem; }
+    h1 { font-size: 1.5rem; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin: 1rem 0; }
+    label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; }
+    button { background: #0f172a; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
+    .perm-row { display: grid; grid-template-columns: 2fr 1fr 2fr auto; gap: 0.5rem; align-items: end; margin-bottom: 0.5rem; }
+    .preview { font-family: ui-monospace, monospace; font-size: 0.8rem; white-space: pre-wrap; background: #f1f5f9; padding: 1rem; border-radius: 6px; }
+    .allow { color: #15803d; } .deny { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>Permission builder prototype</h1>
+  <p>Stage 2 gate (D-010): validate that Casbin-backed RBAC can power a usable admin UX before Stage 3 commits to the engine.</p>
+
+  <div class="card">
+    <h2>1. Create custom role</h2>
+    <label for="role">Role name</label>
+    <input id="role" value="staging-deployer" />
+  </div>
+
+  <div class="card">
+    <h2>2–3. Grant permissions with conditions</h2>
+    <div id="permissions"></div>
+    <button type="button" onclick="addPerm()">Add permission</button>
+  </div>
+
+  <div class="card">
+    <h2>4. Assign role</h2>
+    <label for="user">User email</label>
+    <input id="user" value="dev@example.com" />
+    <label for="group">Group</label>
+    <input id="group" value="developers" />
+  </div>
+
+  <div class="card">
+    <h2>5. Preview — what can this user do?</h2>
+    <label for="fixture">Sample action</label>
+    <select id="fixture">
+      <option value="deploy:staging:web">Deploy stack web in staging</option>
+      <option value="deploy:production:web">Deploy stack web in production</option>
+      <option value="secret:/api/db:read">Read secret /api/db value</option>
+      <option value="secret:/shared/registry:read">Read secret /shared/registry value</option>
+    </select>
+    <button type="button" onclick="preview()">Evaluate</button>
+    <div id="result" class="preview" style="margin-top:1rem"></div>
+  </div>
+
+  <script>
+    const actions = [
+      "swarm.stacks.deploy",
+      "secrets.read_value",
+      "swarm.stacks.remove",
+      "swarm.services.logs",
+    ];
+    const conditions = [
+      { id: "env", label: "environment =", placeholder: "staging" },
+      { id: "stack", label: "stack name =", placeholder: "web" },
+      { id: "path", label: "secret path startsWith", placeholder: "/api/" },
+    ];
+
+    function addPerm(action, condType, condValue) {
+      const row = document.createElement("div");
+      row.className = "perm-row";
+      row.innerHTML = `
+        <div><label>Action</label><select class="action">${actions.map(a => `<option ${a===action?'selected':''}>${a}</option>`).join("")}</select></div>
+        <div><label>Condition</label><select class="cond-type">${conditions.map(c => `<option value="${c.id}" ${c.id===condType?'selected':''}>${c.label}</option>`).join("")}</select></div>
+        <div><label>Value</label><input class="cond-value" value="${condValue || ""}" /></div>
+        <div><button type="button" onclick="this.closest('.perm-row').remove()">Remove</button></div>`;
+      document.getElementById("permissions").appendChild(row);
+    }
+
+    addPerm("swarm.stacks.deploy", "env", "staging");
+    addPerm("secrets.read_value", "path", "/api/");
+
+    function preview() {
+      const role = document.getElementById("role").value;
+      const user = document.getElementById("user").value;
+      const fixture = document.getElementById("fixture").value;
+      const perms = [...document.querySelectorAll(".perm-row")].map(row => ({
+        action: row.querySelector(".action").value,
+        cond: row.querySelector(".cond-type").value,
+        value: row.querySelector(".cond-value").value,
+      }));
+
+      let allow = false;
+      let matched = [];
+      if (fixture.startsWith("deploy:")) {
+        const [, env, stack] = fixture.split(":");
+        for (const p of perms) {
+          if (p.action !== "swarm.stacks.deploy") continue;
+          if (p.cond === "env" && p.value === env) { allow = true; matched.push(p); }
+        }
+        if (env === "production") allow = false;
+      }
+      if (fixture.startsWith("secret:")) {
+        const [, path] = fixture.split(":");
+        for (const p of perms) {
+          if (p.action !== "secrets.read_value") continue;
+          if (p.cond === "path" && path.startsWith(p.value)) { allow = true; matched.push(p); }
+        }
+      }
+
+      const lines = [
+        `Role: ${role}`,
+        `User: ${user}`,
+        `Fixture: ${fixture}`,
+        `Decision: ${allow ? "ALLOW" : "DENY"}`,
+        "",
+        "Matching policy rows (Casbin CSV preview):",
+        ...perms.map(p => `p, ${role}, ${p.action}, allow, ${p.cond}=${p.value}`),
+        "",
+        "Matched for this request:",
+        ...(matched.length ? matched.map(p => `  ${p.action} (${p.cond}=${p.value})`) : ["  (none)"]),
+      ];
+      const el = document.getElementById("result");
+      el.textContent = lines.join("\n");
+      el.className = "preview " + (allow ? "allow" : "deny");
+    }
+    preview();
+  </script>
+</body>
+</html>

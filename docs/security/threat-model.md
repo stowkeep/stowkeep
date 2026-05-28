@@ -137,7 +137,9 @@ We focus on the flows that exist at v1 scope: login, API authz, stack deploy, se
 | **R** | "I didn't deploy that" | Audit + retained compose snapshot (hash + content) per deploy |
 | **I** | Compose file env block contains secrets that get logged | Compose parser scrubs `environment:` from any log payload; reviewer test (D-021) enforces |
 | **D** | Huge compose / nested YAML bomb | Parser limits: max size (1 MiB default), max depth, max anchors |
-| **E** | Deploy reaches services outside user's allowed env/stack scope | Authz check uses Casbin conditions (environment, stack name) before Docker call |
+| **E** | Deploy reaches services outside user's allowed env/stack scope | Stage 2: `pkg/rbac` admin-only stub on all mutating routes; Stage 3 Casbin conditions enforce env/stack scope |
+
+**Stage 2 implementation (2026-05):** `pkg/compose` enforces 1 MiB / depth / anchor limits; deploy stores compose content hash in audit `after_hash`; mutating routes require `stack_deploy` + session auth.
 
 ### 4.4 Secret create / update / read (Stage 4+)
 

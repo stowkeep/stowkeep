@@ -103,7 +103,15 @@ export function StacksPage() {
 
   return (
     <>
-      <PageHeader title="Stacks" description="Compose stacks deployed to Swarm." />
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <PageHeader title="Stacks" description="Compose stacks deployed to Swarm." />
+        <Link
+          to="/stacks/deploy"
+          className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          Deploy stack
+        </Link>
+      </div>
       <DataTable
         loading={isLoading}
         error={error instanceof Error ? error.message : null}

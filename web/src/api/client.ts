@@ -67,6 +67,19 @@ export type StackDetail = {
   services: Service[];
 };
 
+/** Compose validation error from the API. */
+export type ComposeValidationError = {
+  path: string;
+  message: string;
+};
+
+/** Compose validation result. */
+export type ComposeValidationResult = {
+  valid: boolean;
+  errors?: ComposeValidationError[];
+  hash?: string;
+};
+
 /** HTTP error thrown by the API client. */
 export class ApiError extends Error {
   /** HTTP status code from the failed response. */
@@ -133,4 +146,39 @@ export const api = {
   stacks: () => request<{ items: StackSummary[] }>("/api/v1/swarm/stacks"),
   /** Returns services belonging to a stack. */
   stack: (name: string) => request<StackDetail>(`/api/v1/swarm/stacks/${encodeURIComponent(name)}`),
+  /** Validates compose YAML for a stack name. */
+  validateStack: (name: string, compose: string) =>
+    request<ComposeValidationResult>("/api/v1/stacks/validate", {
+      method: "POST",
+      body: JSON.stringify({ name, compose }),
+    }),
+  /** Deploys a stack from compose YAML. */
+  deployStack: (name: string, compose: string, env?: Record<string, string>) =>
+    request<StackDetail>("/api/v1/stacks", {
+      method: "POST",
+      body: JSON.stringify({ name, compose, env }),
+    }),
+  /** Removes a deployed stack. */
+  removeStack: (name: string) =>
+    request<{ status: string }>(`/api/v1/stacks/${encodeURIComponent(name)}`, { method: "DELETE" }),
+  /** Scales a service replica count. */
+  scaleService: (serviceId: string, replicas: number) =>
+    request<{ service_id: string; replicas: number }>(
+      `/api/v1/stacks/services/${encodeURIComponent(serviceId)}/scale`,
+      { method: "PATCH", body: JSON.stringify({ replicas }) },
+    ),
+  /** Fetches recent service logs as plain text. */
+  serviceLogs: async (serviceId: string, opts?: { tail?: string; follow?: boolean }) => {
+    const params = new URLSearchParams();
+    if (opts?.tail) params.set("tail", opts.tail);
+    if (opts?.follow) params.set("follow", "true");
+    const q = params.toString();
+    const res = await fetch(`/api/v1/stacks/services/${encodeURIComponent(serviceId)}/logs${q ? `?${q}` : ""}`, {
+      credentials: "include",
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, res.statusText);
+    }
+    return res.text();
+  },
 };

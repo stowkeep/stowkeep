@@ -151,6 +151,106 @@ paths:
           description: Stack detail
         "404":
           description: Not found
+  /api/v1/stacks/validate:
+    post:
+      summary: Validate compose YAML
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StackComposeRequest"
+      responses:
+        "200":
+          description: Validation result
+        "404":
+          description: Feature disabled
+  /api/v1/stacks:
+    post:
+      summary: Deploy stack
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StackDeployRequest"
+      responses:
+        "201":
+          description: Stack deployed
+        "400":
+          description: Validation failed
+        "403":
+          description: Forbidden
+        "404":
+          description: Feature disabled
+        "502":
+          description: Docker error
+  /api/v1/stacks/{name}:
+    delete:
+      summary: Remove stack
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Removed
+        "403":
+          description: Forbidden
+        "404":
+          description: Feature disabled
+  /api/v1/stacks/services/{id}/scale:
+    patch:
+      summary: Scale service replicas
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                replicas:
+                  type: integer
+      responses:
+        "200":
+          description: Scaled
+  /api/v1/stacks/services/{id}/logs:
+    get:
+      summary: Service logs
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: follow
+          in: query
+          schema:
+            type: boolean
+        - name: tail
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Log stream (text/plain)
 components:
   securitySchemes:
     cookieAuth:
@@ -177,3 +277,20 @@ components:
           type: string
         role:
           type: string
+    StackComposeRequest:
+      type: object
+      required: [name, compose]
+      properties:
+        name:
+          type: string
+        compose:
+          type: string
+    StackDeployRequest:
+      allOf:
+        - $ref: "#/components/schemas/StackComposeRequest"
+        - type: object
+          properties:
+            env:
+              type: object
+              additionalProperties:
+                type: string
