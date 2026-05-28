@@ -111,7 +111,7 @@ func (s *Store) ListAll(ctx context.Context) ([]Row, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []Row
 	for rows.Next() {

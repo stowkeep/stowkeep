@@ -24,7 +24,7 @@ func (c *Client) DeployStack(ctx context.Context, name string, content []byte, e
 	if err != nil {
 		return fmt.Errorf("load compose: %w", err)
 	}
-	if env != nil {
+	if len(env) > 0 {
 		for k, v := range env {
 			project.Environment[k] = v
 		}
@@ -123,7 +123,11 @@ func serviceSpecFromCompose(stack, networkID string, svc types.ServiceConfig) (s
 	if svc.Image == "" {
 		return swarm.ServiceSpec{}, fmt.Errorf("service %q requires an image", svc.Name)
 	}
-	replicas := uint64(svc.GetScale())
+	scale := svc.GetScale()
+	if scale < 0 {
+		return swarm.ServiceSpec{}, fmt.Errorf("service %q has negative replicas", svc.Name)
+	}
+	replicas := uint64(scale)
 	env := environmentList(svc.Environment)
 
 	spec := swarm.ServiceSpec{
