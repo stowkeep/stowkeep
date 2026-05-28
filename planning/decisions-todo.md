@@ -64,7 +64,7 @@ ADRs in `docs/adr/` capture the deeper reasoning for the most significant decisi
 | ID | Question | Revisit when | Notes |
 |----|----------|--------------|-------|
 | DEF-001 | MEK rotation procedure (re-wrap DEKs without big-bang re-encryption) | Stage 4 kickoff | Per-DEK `key_id` from D-008 makes this possible without rewrite. Design + runbook needed before any real secrets exist. |
-| DEF-002 | Casbin policy authoring UX prototype | **Shipped Stage 2** — [docs/prototypes/permission-builder.html](../docs/prototypes/permission-builder.html). Outcome: Casbin CSV mappable to guided UI; proceed with Casbin in Stage 3 unless maintainer review rejects mockup. |
+| DEF-002 | Casbin policy authoring UX prototype | **Shipped Stage 2** | [docs/prototypes/permission-builder.html](../docs/prototypes/permission-builder.html). Outcome: Casbin CSV mappable to guided UI; proceed with Casbin in Stage 3 unless maintainer review rejects mockup. |
 | DEF-003 | `go-git` limits & repo size policy | Stage 5 kickoff, or first repo > ~100 MB | Document max repo size, no LFS, treeless clone strategy. Switch to shelling out to `git` if `go-git` proves insufficient for the typical infra-repo use case. |
 | DEF-004 | Preview environment design (routing strategy, secret scoping, TTL semantics) | Post-Stage 5, before Stage 6 begins | Per D-015. |
 | DEF-005 | Webhook ingestion design (per-provider HMAC, replay window, idempotency key, debounce) | When webhooks are scheduled (post initial Stage 5) | Per D-014. |

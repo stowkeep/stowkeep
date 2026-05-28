@@ -76,7 +76,16 @@ func RecordIntegrityBreak(ctx context.Context, db *sql.DB, driver string, breakA
 func StartVerifier(ctx context.Context, store *Store, onBreak func(VerifyResult)) {
 	go func() {
 		res, err := VerifyChain(ctx, store)
-		if err != nil || res.OK {
+		if err != nil {
+			if onBreak != nil {
+				onBreak(VerifyResult{
+					OK:     false,
+					Detail: fmt.Sprintf("verify chain failed: %v", err),
+				})
+			}
+			return
+		}
+		if res.OK {
 			return
 		}
 		if onBreak != nil {

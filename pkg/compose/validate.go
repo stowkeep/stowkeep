@@ -140,6 +140,7 @@ func checkYAMLDepthAndAnchors(content []byte) error {
 	depth := 0
 	maxDepth := 0
 	anchorCount := 0
+	atLineStart := true
 	r := bytes.NewReader(content)
 	for {
 		b, err := r.ReadByte()
@@ -150,22 +151,26 @@ func checkYAMLDepthAndAnchors(content []byte) error {
 			return fmt.Errorf("read compose: %w", err)
 		}
 		switch b {
-		case ' ':
-			continue
-		case '\t':
-			continue
 		case '\n', '\r':
+			if depth > maxDepth {
+				maxDepth = depth
+			}
 			depth = 0
+			atLineStart = true
+			continue
+		case ' ', '\t':
+			if atLineStart {
+				depth++
+			}
+			continue
 		default:
+			atLineStart = false
 			if depth > maxDepth {
 				maxDepth = depth
 			}
 		}
 		if b == '&' {
 			anchorCount++
-		}
-		if b == ' ' {
-			depth++
 		}
 	}
 	if maxDepth > MaxDepth {
@@ -192,20 +197,31 @@ func ScrubEnvironmentForLog(s string) string {
 		return s
 	}
 	lines := strings.Split(s, "\n")
+	inEnv := false
+	envIndent := -1
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "- ") || strings.Contains(trimmed, "=") {
-			if strings.Contains(strings.ToLower(lines[max(0, i-1)]), "environment:") {
-				lines[i] = "  - [redacted]"
-			}
+		indent := len(line) - len(strings.TrimLeft(line, " "))
+
+		if strings.HasSuffix(strings.ToLower(trimmed), "environment:") {
+			inEnv = true
+			envIndent = indent
+			continue
+		}
+		if !inEnv {
+			continue
+		}
+		if trimmed == "" {
+			continue
+		}
+		if indent <= envIndent {
+			inEnv = false
+			continue
+		}
+		if strings.HasPrefix(trimmed, "- ") || strings.Contains(trimmed, "=") || strings.Contains(trimmed, ":") {
+			prefix := line[:indent]
+			lines[i] = prefix + "[redacted]"
 		}
 	}
 	return strings.Join(lines, "\n")
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

@@ -25,6 +25,9 @@ func (c *Client) DeployStack(ctx context.Context, name string, content []byte, e
 		return fmt.Errorf("load compose: %w", err)
 	}
 	if len(env) > 0 {
+		if project.Environment == nil {
+			project.Environment = map[string]string{}
+		}
 		for k, v := range env {
 			project.Environment[k] = v
 		}
@@ -182,7 +185,10 @@ func publishedPorts(ports []types.ServicePortConfig) ([]swarm.PortConfig, error)
 		if p.Target == 0 {
 			continue
 		}
-		pub := parsePublishedPort(p.Published)
+		pub, err := parsePublishedPort(p.Published)
+		if err != nil {
+			return nil, fmt.Errorf("invalid published port %q for target %d: %w", p.Published, p.Target, err)
+		}
 		proto := network.TCP
 		if strings.EqualFold(p.Protocol, "udp") {
 			proto = network.UDP
@@ -201,15 +207,15 @@ func publishedPorts(ports []types.ServicePortConfig) ([]swarm.PortConfig, error)
 	return out, nil
 }
 
-func parsePublishedPort(s string) uint32 {
+func parsePublishedPort(s string) (uint32, error) {
 	if s == "" {
-		return 0
+		return 0, nil
 	}
 	n, err := strconv.ParseUint(s, 10, 32)
 	if err != nil {
-		return 0
+		return 0, err
 	}
-	return uint32(n)
+	return uint32(n), nil
 }
 
 // RemoveStack removes all services and networks for a stack namespace.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stowkeep/stowkeep/pkg/compose"
@@ -85,5 +86,24 @@ func TestContentHashStable(t *testing.T) {
 	b := compose.ContentHash([]byte("hello"))
 	if a != b {
 		t.Fatalf("hash not stable: %s vs %s", a, b)
+	}
+}
+
+func TestYAMLDepthAllowsInlineSpaces(t *testing.T) {
+	content := []byte("services:\n  web:\n    image: nginx:alpine\n    command: echo hello world with many spaces\n")
+	res := compose.Validate(context.Background(), content, "web")
+	if !res.Valid {
+		t.Fatalf("expected valid compose with inline spaces, got: %+v", res.Errors)
+	}
+}
+
+func TestScrubEnvironmentForLog(t *testing.T) {
+	input := "services:\n  web:\n    environment:\n      - SECRET=abc123\n      API_KEY: supersecret\n    image: nginx\n"
+	got := compose.ScrubEnvironmentForLog(input)
+	if strings.Contains(got, "abc123") || strings.Contains(got, "supersecret") {
+		t.Fatalf("secrets not redacted: %q", got)
+	}
+	if !strings.Contains(got, "[redacted]") {
+		t.Fatalf("expected redaction markers: %q", got)
 	}
 }

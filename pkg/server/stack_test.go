@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -64,4 +65,63 @@ func TestStackValidateInvalidCompose(t *testing.T) {
 	if result["valid"] == true {
 		t.Fatal("expected invalid compose")
 	}
+}
+
+func TestStackEndpointsRequireAuth(t *testing.T) {
+	srv := testServerWithFeatures(t, "stack_deploy")
+	paths := []struct {
+		method string
+		path   string
+		body   []byte
+	}{
+		{http.MethodPost, "/api/v1/stacks/validate", mustJSON(t, map[string]string{"name": "web", "compose": "services:\n  a:\n    image: nginx\n"})},
+		{http.MethodDelete, "/api/v1/stacks/web", nil},
+		{http.MethodPatch, "/api/v1/stacks/services/svc1/scale", mustJSON(t, map[string]uint64{"replicas": 1})},
+		{http.MethodGet, "/api/v1/stacks/services/svc1/logs", nil},
+	}
+	for _, tc := range paths {
+		t.Run(tc.method+" "+tc.path, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, bytes.NewReader(tc.body))
+			rec := httptest.NewRecorder()
+			srv.Handler().ServeHTTP(rec, req)
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("unauthenticated = %d", rec.Code)
+			}
+		})
+	}
+}
+
+func TestStackRemoveInvalidName(t *testing.T) {
+	srv := testServerWithFeatures(t, "stack_deploy")
+	cookie := bootstrapSession(t, srv)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/stacks/INVALID", nil)
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("invalid name = %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestStackValidateRequestBodyTooLarge(t *testing.T) {
+	srv := testServerWithFeatures(t, "stack_deploy")
+	cookie := bootstrapSession(t, srv)
+	oversize := strings.Repeat("x", 1<<20+2048)
+	body, _ := json.Marshal(map[string]string{"name": "web", "compose": oversize})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/stacks/validate", bytes.NewReader(body))
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("oversize body = %d", rec.Code)
+	}
+}
+
+func mustJSON(t *testing.T, v any) []byte {
+	t.Helper()
+	b, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }

@@ -60,10 +60,30 @@ type scaleRequest struct {
 	Replicas uint64 `json:"replicas"`
 }
 
-func (h *StackHandler) validate(w http.ResponseWriter, r *http.Request) {
-	var req validateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+const maxStackRequestBytes = compose.MaxFileSize + 1024
+
+func decodeStackJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, maxStackRequestBytes)
+	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			writeJSON(w, http.StatusRequestEntityTooLarge, map[string]string{"error": "request body too large"})
+			return err
+		}
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+		return err
+	}
+	return nil
+}
+
+func (h *StackHandler) validate(w http.ResponseWriter, r *http.Request) {
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok || !h.authz.Allow(r.Context(), user, "swarm.stacks.deploy", "stack", "") {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+		return
+	}
+	var req validateRequest
+	if err := decodeStackJSON(w, r, &req); err != nil {
 		return
 	}
 	result := compose.Validate(r.Context(), []byte(req.Compose), req.Name)
@@ -82,8 +102,7 @@ func (h *StackHandler) deploy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req deployRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+	if err := decodeStackJSON(w, r, &req); err != nil {
 		return
 	}
 	content := []byte(req.Compose)

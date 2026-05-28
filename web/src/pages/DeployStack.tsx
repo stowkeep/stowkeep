@@ -20,6 +20,10 @@ export default function DeployStackPage() {
     onSuccess: (result) => {
       setErrors(result.errors ?? []);
     },
+    onError: (err: unknown) => {
+      const message = err instanceof ApiError ? err.message : "Validation request failed";
+      setErrors([{ path: "compose", message }]);
+    },
   });
 
   const deploy = useMutation({
@@ -36,12 +40,21 @@ export default function DeployStackPage() {
 
   async function handleValidate() {
     setErrors([]);
-    await validate.mutateAsync();
+    try {
+      await validate.mutateAsync();
+    } catch {
+      // onError sets inline validation errors
+    }
   }
 
   async function handleDeploy() {
     setErrors([]);
-    const result = await validate.mutateAsync();
+    let result;
+    try {
+      result = await validate.mutateAsync();
+    } catch {
+      return;
+    }
     if (!result.valid) {
       setErrors(result.errors ?? []);
       return;
