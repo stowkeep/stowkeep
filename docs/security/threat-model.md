@@ -17,7 +17,7 @@ This is a STRIDE-based threat model for the Stowkeep control plane. Its purpose 
 |-------|-------------|----------------|-------|
 | Secret values (plaintext) | **Critical** | In-memory at decrypt time only | Never written to disk, logs, audit payloads, or HTTP responses outside `read_value` flow |
 | Secret ciphertext + DEK | High | Database (SQLite/Postgres) | Encrypted at rest with envelope (DEK per secret version, MEK wraps DEKs) |
-| MEK (master encryption key) | **Critical** | `STOWKEEP_MASTER_KEY` env var (later: KMS) | Loss = unrecoverable secrets; theft = full secret disclosure |
+| MEK (master encryption key) | **Critical** | `STOWKEEP_MASTER_KEY` env or `STOWKEEP_MASTER_KEY_FILE` Swarm mount (later: KMS) | Loss = unrecoverable secrets; theft = full secret disclosure |
 | User credentials | High | Database — argon2id / bcrypt hashed | Never logged, never returned in API responses |
 | Session tokens | High | HTTP-only cookies + DB-backed session table | `HttpOnly`, `Secure`, `SameSite=Lax`/`Strict`; short idle timeout |
 | API tokens | High | Database — hashed at rest | Bearer pattern; revocable; scoped to actions |

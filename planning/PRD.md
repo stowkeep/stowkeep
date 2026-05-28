@@ -140,7 +140,7 @@ branch: main
 poll_interval: 5m
 secrets:
   - path: /api/database
-    inject: env
+    inject: file
 ```
 
 ### 6.4 Secrets management
@@ -357,10 +357,13 @@ Agents and junior contributors should read **[AGENTS.md](../AGENTS.md)** before 
 | Secret CRUD with path hierarchy | Secrets organized by environment + path |
 | Version history + rollback | Each edit creates version; rollback restores prior value |
 | Envelope encryption via `MasterKeyProvider` interface (D-008) | DB inspection shows ciphertext only; `EnvKey` impl shipped; `KMSProvider` stub interface in place; each DEK row stores `key_id` |
+| Bootstrap config via `STOWKEEP_*` and `STOWKEEP_*_FILE` | Operators set MEK via env (homelab) or Swarm secret file mounts (production); no bootstrap MEK wizard |
+| MEK input normalization (`pkg/secrets/keyinput`) | Accept passphrase, hex, or base64 in env; raw bytes from `_FILE`; no manual base64 encoding required |
 | MEK rotation procedure documented + tested | Rotation path re-wraps DEKs in the background without re-encrypting values; documented in `docs/secrets-rotation.md` |
 | Swarm secret materialization (D-009) | Versioned Swarm secret names; rolling-update path; old-version garbage collection after no service references remain |
+| Secret inject modes for deployed stacks | Default: Swarm secret file mounts; optional `inject: env` for legacy images (documented downgrade); `inject: file` is native Swarm behavior |
 | `describe` vs `read_value` permissions | User with describe-only sees names, not values |
-| Inject secrets into stack deploy | Deploy resolves `${SO_SECRET_*}` or configured mapping (no plaintext on disk; no plaintext in logs — sentinel-tested) |
+| Inject secrets into stack deploy | Deploy resolves `${SO_SECRET_*}` or configured mapping; supports `inject: file` (default) and opt-in `inject: env` for legacy containers (no plaintext in logs — sentinel-tested) |
 | Secret access audit | Read-value events logged (hash-chained, no value) |
 | **SOPS support** (D-028) | Encrypted YAML files in Git can be decrypted at deploy via configured age/GPG keys |
 | Scheduled backups with secret ciphertext (D-016) | UI configurable; local + S3; HMAC-integrity-checked on restore |

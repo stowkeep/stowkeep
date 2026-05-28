@@ -4,6 +4,7 @@ import { api, ApiError } from "../api/client";
 import { DataTable, PageHeader } from "../components/DataTable";
 import { Button } from "../components/ui/primitives";
 import { useDockerStatus } from "../hooks/useDockerStatus";
+import { useFeatures } from "../hooks/useFeatures";
 
 /** Stack detail with services, replicas, and published ports. */
 export default function StackDetailPage() {
@@ -11,6 +12,7 @@ export default function StackDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: dockerStatus } = useDockerStatus();
+  const { stackDeployEnabled } = useFeatures();
   const disabled = dockerStatus != null && !dockerStatus.connected;
 
   const { data, isLoading, error } = useQuery({
@@ -57,9 +59,11 @@ export default function StackDetailPage() {
         <Link className="text-sm text-slate-600 hover:text-slate-900" to="/stacks">
           ← Back to stacks
         </Link>
-        <Button variant="secondary" disabled={disabled || removeStack.isPending} onClick={handleRemove}>
-          {removeStack.isPending ? "Removing…" : "Remove stack"}
-        </Button>
+        {stackDeployEnabled && (
+          <Button variant="secondary" disabled={disabled || removeStack.isPending} onClick={handleRemove}>
+            {removeStack.isPending ? "Removing…" : "Remove stack"}
+          </Button>
+        )}
       </div>
       <PageHeader title={name} description="Services in this stack." />
       {removeStack.error instanceof ApiError && (
@@ -82,19 +86,22 @@ export default function StackDetailPage() {
           },
           {
             header: "Actions",
-            cell: (s) => (
-              <div className="flex gap-2">
-                <Button variant="ghost" disabled={disabled} onClick={() => handleScale(s.id, s.replicas)}>
-                  Scale
-                </Button>
-                <Link
-                  className="inline-flex items-center rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                  to={`/services/${encodeURIComponent(s.id)}/logs`}
-                >
-                  Logs
-                </Link>
-              </div>
-            ),
+            cell: (s) =>
+              stackDeployEnabled ? (
+                <div className="flex gap-2">
+                  <Button variant="ghost" disabled={disabled} onClick={() => handleScale(s.id, s.replicas)}>
+                    Scale
+                  </Button>
+                  <Link
+                    className="inline-flex items-center rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                    to={`/services/${encodeURIComponent(s.id)}/logs`}
+                  >
+                    Logs
+                  </Link>
+                </div>
+              ) : (
+                "—"
+              ),
           },
         ]}
         rows={data?.services ?? []}

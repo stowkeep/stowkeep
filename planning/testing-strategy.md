@@ -249,6 +249,8 @@ Every `release-image` build asserts (and fails on missing):
 - Encrypt/decrypt roundtrip (envelope)
 - Version increment on update
 - Rollback restores ciphertext at version N
+- `pkg/secrets/keyinput`: MEK normalization (passphrase, hex, base64, raw file bytes)
+- `pkg/config`: `STOWKEEP_*_FILE` resolution (direct env wins, trim trailing newline, missing file error)
 
 **Integration**
 

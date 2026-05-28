@@ -80,6 +80,13 @@ export type ComposeValidationResult = {
   hash?: string;
 };
 
+/** Server version and enabled feature flags. */
+export type VersionInfo = {
+  version: string;
+  service: string;
+  features: string[];
+};
+
 /** HTTP error thrown by the API client. */
 export class ApiError extends Error {
   /** HTTP status code from the failed response. */
@@ -113,6 +120,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 /** Typed HTTP client for Stowkeep API endpoints. */
 export const api = {
+  /** Returns server version and enabled feature flags. */
+  version: () => request<VersionInfo>("/api/v1/version"),
   /** Returns whether first-run admin bootstrap is required. */
   setupStatus: () => request<{ needs_bootstrap: boolean }>("/api/v1/setup/status"),
   /** Creates the initial admin account during bootstrap. */

@@ -4,13 +4,15 @@ Stage 2 enables deploying and managing Swarm stacks from the Stowkeep UI when th
 
 ## Enable stack deploy
 
-Set both read-only and deploy flags (read-only is required for dashboard views):
+Set both read-only and deploy flags (read-only is required for dashboard views). For local development, add to `.env`:
 
 ```bash
 STOWKEEP_FEATURES=swarm_readonly,stack_deploy
 ```
 
-See [.env.example](../.env.example) and [install.md](./install.md).
+The **Deploy stack** button and stack lifecycle actions appear in the UI only when `stack_deploy` is enabled on the server.
+
+See [.env.example](../.env.example), [development-guide.md](./development-guide.md), and [install.md](./install.md).
 
 ## Deploy a stack
 

@@ -36,12 +36,12 @@ Product and architecture planning lives in [../planning/](../planning/).
 | Document | Description |
 |----------|-------------|
 | [install.md](./install.md) | First-run bootstrap and Docker socket mount |
+| [configuration.md](./configuration.md) | Environment variables and feature flags |
 | [stacks.md](./stacks.md) | Stack deploy, scale, logs, feature flags |
 | [audit.md](./audit.md) | Hash-chained audit event format |
 
 ## Future docs (as features ship)
 
-- `docs/configuration.md` — environment variables reference
 - `docs/stowkeep-yml.md` — GitOps manifest reference
 - `docs/rbac.md` — roles and permissions cookbook
 - `docs/secrets.md` — secrets encryption and rotation

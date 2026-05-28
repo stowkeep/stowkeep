@@ -3,9 +3,12 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -29,7 +32,12 @@ type Config struct {
 }
 
 // Load reads configuration from the environment.
+// If a .env file exists in the working directory (or STOWKEEP_ENV_FILE), variables
+// are loaded first; existing process environment values take precedence.
 func Load() (*Config, error) {
+	if err := loadEnvFile(); err != nil {
+		return nil, fmt.Errorf("load env file: %w", err)
+	}
 	var cfg Config
 	if err := envconfig.Process("", &cfg); err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
@@ -38,6 +46,20 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+func loadEnvFile() error {
+	path := os.Getenv("STOWKEEP_ENV_FILE")
+	if path == "" {
+		path = ".env"
+	}
+	if err := godotenv.Load(path); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func (c *Config) validate() error {
@@ -106,4 +128,15 @@ func (c *Config) FeatureSet() map[string]struct{} {
 func (c *Config) HasFeature(name string) bool {
 	_, ok := c.FeatureSet()[name]
 	return ok
+}
+
+// EnabledFeatures returns sorted enabled feature flag names.
+func (c *Config) EnabledFeatures() []string {
+	set := c.FeatureSet()
+	out := make([]string, 0, len(set))
+	for name := range set {
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
 }

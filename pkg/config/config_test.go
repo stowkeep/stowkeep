@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stowkeep/stowkeep/pkg/config"
@@ -76,5 +78,83 @@ func TestResolvedSQLitePathCaseInsensitiveScheme(t *testing.T) {
 	}
 	if cfg.ResolvedSQLitePath() != "/tmp/stowkeep.db" {
 		t.Fatalf("ResolvedSQLitePath() = %q, want /tmp/stowkeep.db", cfg.ResolvedSQLitePath())
+	}
+}
+
+func TestLoadFromDotEnvFile(t *testing.T) {
+	dir := t.TempDir()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+
+	envPath := filepath.Join(dir, ".env")
+	if err := os.WriteFile(envPath, []byte("STOWKEEP_LOG_FORMAT=text\nSTOWKEEP_DATABASE_PATH=./.data/fromenv.db\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("STOWKEEP_DATABASE_URL", "")
+	t.Setenv("STOWKEEP_DATABASE_DRIVER", "")
+
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.LogFormat != "text" {
+		t.Fatalf("LogFormat = %q, want text from .env", cfg.LogFormat)
+	}
+	if cfg.ResolvedSQLitePath() != "./.data/fromenv.db" {
+		t.Fatalf("ResolvedSQLitePath() = %q", cfg.ResolvedSQLitePath())
+	}
+}
+
+func TestLoadDotEnvDoesNotOverrideProcessEnv(t *testing.T) {
+	dir := t.TempDir()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+
+	envPath := filepath.Join(dir, ".env")
+	if err := os.WriteFile(envPath, []byte("STOWKEEP_LOG_FORMAT=text\nSTOWKEEP_DATABASE_PATH=./.data/fromenv.db\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("STOWKEEP_DATABASE_URL", "")
+	t.Setenv("STOWKEEP_DATABASE_DRIVER", "")
+	t.Setenv("STOWKEEP_LOG_FORMAT", "json")
+	t.Setenv("STOWKEEP_DATABASE_PATH", "./.data/process.db")
+
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.LogFormat != "json" {
+		t.Fatalf("LogFormat = %q, want json from process env", cfg.LogFormat)
+	}
+	if cfg.ResolvedSQLitePath() != "./.data/process.db" {
+		t.Fatalf("ResolvedSQLitePath() = %q", cfg.ResolvedSQLitePath())
+	}
+}
+
+func TestEnabledFeaturesSorted(t *testing.T) {
+	cfg := &config.Config{Features: "stack_deploy,swarm_readonly"}
+	got := cfg.EnabledFeatures()
+	want := []string{"stack_deploy", "swarm_readonly"}
+	if len(got) != len(want) {
+		t.Fatalf("EnabledFeatures() = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("EnabledFeatures() = %v, want %v", got, want)
+		}
 	}
 }

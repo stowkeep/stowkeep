@@ -12,10 +12,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
+	"github.com/stowkeep/stowkeep/pkg/audit"
 	"github.com/stowkeep/stowkeep/pkg/auth"
 	"github.com/stowkeep/stowkeep/pkg/config"
 	"github.com/stowkeep/stowkeep/pkg/docker"
-	"github.com/stowkeep/stowkeep/pkg/audit"
 	"github.com/stowkeep/stowkeep/pkg/http/middleware"
 	"github.com/stowkeep/stowkeep/pkg/rbac"
 	"github.com/stowkeep/stowkeep/pkg/web"
@@ -131,9 +131,10 @@ func readyHandler(db *sql.DB) http.HandlerFunc {
 
 func versionHandler(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{
-			"version": cfg.Version,
-			"service": "stowkeep",
+		writeJSON(w, http.StatusOK, map[string]any{
+			"version":  cfg.Version,
+			"service":  "stowkeep",
+			"features": cfg.EnabledFeatures(),
 		})
 	}
 }
@@ -161,6 +162,10 @@ func (s *Server) ListenAndServe() error {
 			_ = audit.RecordIntegrityBreak(context.Background(), s.db, s.cfg.ResolvedDriver(), res.BreakAtEventID, res.Detail)
 		})
 	}
+	s.logger.Info("feature flags enabled",
+		slog.String("component", "config"),
+		slog.Any("features", s.cfg.EnabledFeatures()),
+	)
 	s.logger.Info("starting HTTP server",
 		slog.String("component", "http"),
 		slog.String("addr", s.cfg.HTTPAddr),

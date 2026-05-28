@@ -16,6 +16,7 @@ We document significant technical decisions as ADRs. Format: [MADR](https://adr.
 | [0008](./0008-frontend-embed-fs.md) | Frontend embedded via `embed.FS` | Accepted |
 | [0009](./0009-telemetry-posture.md) | Anonymous opt-in telemetry posture | Accepted |
 | [0010](./0010-project-name-stowkeep.md) | Project name: Stowkeep | Accepted |
+| [0011](./0011-bootstrap-config-and-mek-input.md) | Bootstrap config: `.env`, `STOWKEEP_*_FILE`, MEK input | Accepted |
 
 ## Creating an ADR
 

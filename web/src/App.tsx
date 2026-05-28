@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
+import { RequireFeature } from "./auth/FeatureGuards";
+import { HomeRedirect } from "./auth/HomeRedirect";
 import { GuestOnly, RequireAuth, SetupOnly } from "./auth/RouteGuards";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import DeployStackPage from "./pages/DeployStack";
@@ -22,14 +24,18 @@ export default function App() {
         </Route>
         <Route element={<RequireAuth />}>
           <Route element={<DashboardLayout />}>
-            <Route index element={<Navigate to="/nodes" replace />} />
-            <Route path="/nodes" element={<NodesPage />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/stacks" element={<StacksPage />} />
-            <Route path="/stacks/deploy" element={<DeployStackPage />} />
-            <Route path="/stacks/:name" element={<StackDetailPage />} />
-            <Route path="/services/:serviceId/logs" element={<ServiceLogsPage />} />
+            <Route index element={<HomeRedirect />} />
+            <Route element={<RequireFeature feature="swarm_readonly" />}>
+              <Route path="/nodes" element={<NodesPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/stacks" element={<StacksPage />} />
+              <Route path="/stacks/:name" element={<StackDetailPage />} />
+            </Route>
+            <Route element={<RequireFeature feature="stack_deploy" />}>
+              <Route path="/stacks/deploy" element={<DeployStackPage />} />
+              <Route path="/services/:serviceId/logs" element={<ServiceLogsPage />} />
+            </Route>
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>

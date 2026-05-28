@@ -27,6 +27,21 @@ paths:
       responses:
         "200":
           description: Version metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [version, service, features]
+                properties:
+                  version:
+                    type: string
+                  service:
+                    type: string
+                  features:
+                    type: array
+                    items:
+                      type: string
+                    description: Enabled STOWKEEP_FEATURES flags on this instance
   /api/v1/setup/status:
     get:
       summary: First-run bootstrap status
